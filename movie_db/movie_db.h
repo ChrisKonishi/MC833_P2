@@ -2,12 +2,7 @@
 #define MOVIE_DB_H_
 
 #include "movie_db.c"
-
-typedef struct {
-    int id;
-    char name[50];
-    /* Add more stuff */
-} movie_struct;
+#include "../shared_structs.h"
 
 char ***list_movies();
 /* returns [[<id>, <name>], [<id>, <name>]] */
