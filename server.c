@@ -9,14 +9,9 @@
 
 #define MAX_QUEUE 10
 
-// struct sockaddr_in {
-//     short int sin_family; // Address family, AF_INET
-//     unsigned short int sin_port; // Port number
-//     struct in_addr sin_addr; // Internet address
-//     unsigned char sin_zero[8]; // Same size as struct sockaddr
-// };
-
 void process_request();
+
+//void attach_header(char *msg, int size);
 
 int main(int argc, char **argv) {
 
@@ -41,8 +36,6 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    printf("Socket: %d\n", socket_fd);
-
     if ( bind(socket_fd, res->ai_addr, res->ai_addrlen) < 0) {
         printf("Erro ao dar bind\n");
         exit(1);
@@ -53,22 +46,23 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
+    printf("Aguardando conexões...\n");
+
     for ( ; ; ) {
         addr_size = sizeof client_addr;
         if ( (new_fd = accept(socket_fd, (struct sockaddr *)&client_addr, &addr_size)) < 0) {
-            printf("Erro ao dar aceitar conexão\n");
+            printf("Erro ao aceitar conexão\n");
             exit(1);
         }
 
         if ( (child_pid = fork()) == 0) { /* child process */
             close(socket_fd); /* close listening socket */
-            process_request(socket_fd); /* process the request */
+            process_request(new_fd); /* process the request */
             exit(0);
         }
 
         close(new_fd);
     }
-    
 
     return 0;
 }
