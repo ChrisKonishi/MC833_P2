@@ -38,24 +38,32 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    make_request(socket_fd);
+    make_request(socket_fd, 15);
 
     freeaddrinfo(res);
 
     return 0;
 }
 
-void make_request(int socket_fd) {
-    char buf[MAXDATASIZE];
-    int numbytes;
+void make_request(int socket_fd, int operation) {
+    uint16_t buf;
+    int bytes_received, bytes_sent;
 
-    if ( (numbytes = recv(socket_fd, buf, sizeof(buf), 0)) == -1) {
-        perror("recv");
+    operation = htons(operation);
+
+    // Envia a operação requisitada
+    if ( ( bytes_sent = send(socket_fd, &operation, sizeof(uint16_t), 0) ) == -1) {
+        printf("Erro ao enviar operação\n");
         exit(1);
     }
 
-    printf("Numbytes: %d\n", numbytes);
-    buf[numbytes] = '\0';
+    // Verifica o tamanho da resposta
+    if ( ( bytes_received = recv(socket_fd, &buf, sizeof(uint16_t), 0) ) == -1 ) {
+        printf("Erro ao enviar o tamanho da mensagem\n");
+        exit(1);
+    }
 
-    printf("client: received '%s'\n", buf);
+    printf("bytes_received: %d\n", bytes_received);
+
+    printf("client: received '%d'\n", ntohs(buf));
 }

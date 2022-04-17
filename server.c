@@ -68,6 +68,19 @@ int main(int argc, char **argv) {
 }
 
 void process_request(int socket_fd) {
-    printf("Processando requisição...\n");
-    send(socket_fd, "Hello, world!", 13, 0);
+    int bytes_received, bytes_sent;
+    uint16_t operation, temp, size = 100;
+    temp = htons(size);
+
+    // Recebe a operação a ser realizada
+    if ( ( bytes_received = recv(socket_fd, &operation, sizeof(uint16_t), 0) ) == -1 ) {
+        printf("Erro ao enviar o tamanho da mensagem\n");
+        exit(1);
+    }
+    printf("Processando operação %d\n", ntohs(operation));
+    // Primeiro envia o tamanho da mensagem
+    if ( ( bytes_sent = send(socket_fd, &temp, sizeof(uint16_t), 0) ) == -1) {
+        printf("Erro ao enviar o tamanho da mensagem\n");
+        exit(1);
+    }
 }
