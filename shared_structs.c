@@ -31,7 +31,7 @@ int serialize_movie(movie_struct movie, char *dst, int len) {
 
 int deserialize_movie(char *movie_data, movie_struct *dst) {
   char main_sep[2] = "\n";
-  char genres_buffer[1000];
+  char genres_buffer[MAX_SERIALIZED_SIZE];
 
   char *token = strtok(movie_data, main_sep);
   dst->id = atoi(token);

@@ -4,6 +4,8 @@
 #define PORT_NUMBER "3490"
 #define MAXDATASIZE 100
 
+#define MAX_SERIALIZED_SIZE 10000
+
 typedef struct {
   int id;
   char name[50];
