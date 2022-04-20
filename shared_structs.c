@@ -1,3 +1,5 @@
+#include "shared_structs.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,8 +22,7 @@ int serialize_movie(movie_struct movie, char *dst, int len) {
   while (i < movie.genre_count) {
     l_write =
         snprintf(genres_buffer + length, len - length, "%s,", movie.genres[i]);
-    if (l_write <= 0 || l_write >= len - length)
-      return 1;
+    if (l_write <= 0 || l_write >= len - length) return 1;
     length += l_write;
     i++;
   }
@@ -31,15 +32,14 @@ int serialize_movie(movie_struct movie, char *dst, int len) {
 
   length = snprintf(dst, len, "%d\n%s\n%s\n%s\n%d\n", movie.id, movie.name,
                     genres_buffer, movie.director, movie.release_year);
-  if (length <= 0 || length >= len)
-    return 1;
+  if (length <= 0 || length >= len) return 1;
 
   return 0;
 }
 
 int deserialize_movie(char *movie_data, movie_struct *dst) {
   char main_sep[2] = "\n";
-  char genres_buffer[1000];
+  char genres_buffer[MAX_SERIALIZED_SIZE];
 
   char *token = strtok(movie_data, main_sep);
   dst->id = atoi(token);
