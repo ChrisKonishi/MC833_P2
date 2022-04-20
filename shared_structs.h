@@ -4,10 +4,13 @@
 #define PORT_NUMBER "3490"
 #define MAXDATASIZE 100
 
+#define MAX_GENRE_STRING_LENGTH 20
+#define MAX_SERIALIZED_SIZE 10000
+
 typedef struct {
   int id;
   char name[50];
-  char genres[50][20];
+  char genres[10][MAX_GENRE_STRING_LENGTH];
   int genre_count;
   char director[50];
   int release_year;
