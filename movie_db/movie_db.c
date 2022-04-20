@@ -1,13 +1,25 @@
 
 #include "movie_db.h"
+
 #include "../shared_structs.h"
 
-int register_movie(char *name, int genre_count, char **genres, char *director,
+int intialize_movie_db() {
+  if (mkdir(DB_FOLDER, 0777)) {
+    if (errno == EEXIST)
+      return 0;
+    else {
+      fprintf(stderr, "Error on creating DB folder: %d", errno);
+    }
+  }
+  return 0;
+}
+
+int register_movie(char *name, int genre_count,
+                   char genres[][MAX_GENRE_STRING_LENGTH], char *director,
                    int release_year) {
   movie_struct movie; /* temp struct to serialize */
-  movie.name = name;
-  movie.genres = genres;
-  movie.director = director;
+  strcpy(movie.name, name);
+  strcpy(movie.director, director);
   movie.release_year = release_year;
 
   for (int i = 0; i < genre_count; i++) {
@@ -34,6 +46,7 @@ int register_movie(char *name, int genre_count, char **genres, char *director,
   }
   fprintf(file, "%s", buffer);
   fclose(file);
+  return movie.id;
 }
 
 int _get_next_id() { /* return an unused id */
@@ -49,8 +62,6 @@ int _get_next_id() { /* return an unused id */
 int _list_id_name(movie_struct *id_name_list) {
   /* Fill id and name fields on movie struct with data of all movies,
      return number of movies */
-  char buffer[MAX_FILENAME_SIZE];
-
   struct dirent *de;
   DIR *dir = opendir(DB_FOLDER);
   if (dir == NULL) {
@@ -63,11 +74,13 @@ int _list_id_name(movie_struct *id_name_list) {
   char sep[2] = "_";
   int i = 0;
   while ((de = readdir(dir)) != NULL) {
-    token = strtok(de->d_name, sep);
-    id_name_list[i].id = atoi(token);
-    token = strtok(NULL, sep);
-    strcpy(id_name_list[i].name, token);
-    i++;
+    if (de->d_type == DT_REG) {
+      token = strtok(de->d_name, sep);
+      id_name_list[i].id = atoi(token);
+      token = strtok(NULL, sep);
+      strcpy(id_name_list[i].name, token);
+      i++;
+    }
   }
   closedir(dir);
   return i;
