@@ -45,11 +45,23 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-void make_request(int socket_fd, int operation) {
-    uint16_t buf;
-    int bytes_received, bytes_sent;
+void make_request(int socket_fd, int operation, char *param) {
+    char buf[1002];
+    int bytes_received, bytes_sent, msg_size, bytes_left;
 
-    operation = htons(operation);
+    // Adiciona o tamanho da mensagem e o número da operação no início, nessa ordem
+    msg_size = strlen(param) + OPERATION_SIZE + 4;
+    snprintf(buf, 2, "%d%d", msg_size, operation);
+    strcat(buf, param);
+
+    bytes_left = msg_size;
+    do {
+        if ( ( bytes_sent = send(socket_fd, &buf, bytes_left, 0) ) == -1) {
+            printf("Erro ao enviar operação\n");
+            exit(1);
+        bytes_left -= bytes_sent;
+    }
+    } while (bytes_left > 0);
 
     // Envia a operação requisitada
     if ( ( bytes_sent = send(socket_fd, &operation, sizeof(uint16_t), 0) ) == -1) {

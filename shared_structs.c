@@ -4,6 +4,14 @@
 
 #include "shared_structs.h"
 
+#define OPERATION_SIZE 2;
+#define MAX_MSG_SIZE_DIGITS 4;
+
+typedef struct {
+  int operation_id;
+  char param[1000];
+} operation;
+
 int serialize_movie(movie_struct movie, char *dst, int len) {
   char genres_buffer[len];
   int i = 0, length = 0, l_write;
@@ -56,4 +64,53 @@ int deserialize_movie(char *movie_data, movie_struct *dst) {
   }
 
   return 0;
+}
+
+int send_msg(int socket_fd, char *msg, int msg_size) {
+  int bytes_sent, bytes_left;
+  bytes_left = msg_size;
+  do {
+    if ( ( bytes_sent = send(socket_fd, &msg, bytes_left, 0) ) == -1) {
+      return -1;
+    bytes_left -= bytes_sent;
+    }
+  } while (bytes_left > 0);
+}
+
+int recv_msg(int socket_fd, char* buf, int is_operation) {
+  int bytes_received, bytes_left, msg_size;
+  char temp[4], *ptr;
+
+  // Read msg_size
+  bytes_left = MAX_MSG_SIZE_DIGITS;
+  do {
+    if ( ( bytes_received = recv(socket_fd, &temp, bytes_left, 0) ) == -1) {
+      printf("Erro ao enviar operação\n");
+      exit(1);
+    bytes_left -= bytes_received;
+    }
+  } while (bytes_left > 0);
+
+  msg_size = (int) strtol(temp, &ptr);
+
+  // Se o header contém uma operação, leia
+  if (is_operation) {
+    bytes_left = OPERATION_SIZE;
+    do {
+      if ( ( bytes_received = recv(socket_fd, &temp, bytes_left, 0) ) == -1) {
+        printf("Erro ao enviar operação\n");
+        exit(1);
+      bytes_left -= bytes_received;
+      }
+    } while (bytes_left > 0);
+  }
+
+  // Read rest of the msg
+  do {
+    if ( ( bytes_received = recv(socket_fd, &buf, bytes_left, 0) ) == -1) {
+      printf("Erro ao enviar operação\n");
+      exit(1);
+    bytes_left -= bytes_received;
+    }
+  } while (bytes_left > 0);
 }
