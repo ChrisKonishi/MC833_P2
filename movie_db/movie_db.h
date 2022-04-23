@@ -15,6 +15,8 @@
 
 #include "../shared_structs.h"
 
+/* Public functions */
+
 int intialize_movie_db();
 /* Call it before using other db functions, returns 0 if nothing goes wrong */
 
@@ -30,12 +32,13 @@ movie_struct *get_movie_data(movie_struct *movie);
 
 int add_genre_to_movie(int id, char *genre);
 
-movie_struct **get_all_movie_data();
+int get_all_movie_data(char *buffer, int buffer_size);
 
 int rm_movie(int id);
 
-/* Not public functions */
+/* Private functions */
 
+int _read_movie_str(movie_struct movie, char *buffer);
 int test();
 int _get_next_id();
 int _list_id_name(movie_struct *id_name_list);

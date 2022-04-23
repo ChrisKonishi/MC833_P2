@@ -6,11 +6,12 @@
 
 #define MAX_GENRE_STRING_LENGTH 20
 #define MAX_SERIALIZED_SIZE 10000
+#define MAX_GENRE_COUNT 10
 
 typedef struct {
   int id;
   char name[50];
-  char genres[10][MAX_GENRE_STRING_LENGTH];
+  char genres[MAX_GENRE_COUNT][MAX_GENRE_STRING_LENGTH];
   int genre_count;
   char director[50];
   int release_year;
