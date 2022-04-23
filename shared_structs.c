@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/socket.h>
 
 #include "shared_structs.h"
 
@@ -75,11 +76,12 @@ int send_msg(int socket_fd, char *msg, int msg_size) {
     bytes_left -= bytes_sent;
     }
   } while (bytes_left > 0);
+  return 0;
 }
 
 int recv_msg(int socket_fd, char* buf, int is_operation) {
-  int bytes_received, bytes_left, msg_size;
-  char temp[4], *ptr;
+  int bytes_received, bytes_left; /* , msg_size; */
+  char temp[4]; /* *ptr; */
 
   // Read msg_size
   bytes_left = MAX_MSG_SIZE_DIGITS;
@@ -91,7 +93,7 @@ int recv_msg(int socket_fd, char* buf, int is_operation) {
     }
   } while (bytes_left > 0);
 
-  msg_size = (int) strtol(temp, &ptr);
+  /* msg_size = (int) strtol(temp, &ptr, 10); */
 
   // Se o header contém uma operação, leia
   if (is_operation) {
@@ -113,4 +115,5 @@ int recv_msg(int socket_fd, char* buf, int is_operation) {
     bytes_left -= bytes_received;
     }
   } while (bytes_left > 0);
+  return 0;
 }
