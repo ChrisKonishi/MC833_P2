@@ -68,25 +68,18 @@ int main(int argc, char **argv) {
 }
 
 void process_request(int socket_fd) {
-    int bytes_received, bytes_sent, msg_size;
-    temp = htons(size);
+    int msg_size, operation;
+    char temp[2], buf[1000], *token;
+    char delim[2] = ",";
 
     // Recebe a operação a ser realizada
-    bytes_left = msg_size;
-    do {
-        if ( ( bytes_received = recv(socket_fd, &buf, sizeof(uint16_t), 0) ) == -1 ) {
-            printf("Erro ao receber mensagems\n");
-            exit(1);
-        }
-        bytes_left -= bytes_received;
-    }
-    } while (bytes_left > 0);
-
-    printf("Processando operação %d\n", ntohs(operation));
-    // Primeiro envia o tamanho da mensagem
-    if ( ( bytes_sent = send(socket_fd, &temp, sizeof(uint16_t), 0) ) == -1) {
-        printf("Erro ao enviar o tamanho da mensagem\n");
-        exit(1);
-    }
+    recv_msg(socket_fd, buf, 1);
+    token = strtok(buf, delim);
+    operation = (int) strtol(token, NULL, 10);
+    // Lê os parâmetros
+    while( token != NULL ) {
+      printf( " %s\n", token );
+      token = strtok(NULL, s);
+   }
 }
 
