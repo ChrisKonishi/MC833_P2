@@ -57,9 +57,8 @@ int get_all_movie_data(char *buffer, int buffer_size) {
   int l_write, offset = 0;
 
   for (int i = 0; i < q; i++) {
-
     l_write = _get_pretty_movie_str(movie_list[i], buffer + offset,
-                                    buffer_size - offset);
+                                    buffer_size - offset, NULL);
     if (l_write == -1) {
       return 1;
     }
@@ -85,15 +84,34 @@ int get_movie_data(int id, char *buffer, int buffer_size) {
   }
 
   movie_struct *movie = &movie_list[movie_idx];
-  if (_get_pretty_movie_str(*movie, buffer, buffer_size) == -1){
+  if (_get_pretty_movie_str(*movie, buffer, buffer_size, NULL) == -1) {
     return 1;
   }
   return 0;
 }
 
+int get_movie_per_genre(char *buffer, int buffer_size, char *genre) {
+  movie_struct movie_list[MAX_MOVIES];
+  int q = _list_id_name(movie_list);
+  int l_write, offset = 0;
+
+  for (int i = 0; i < q; i++) {
+    l_write = _get_pretty_movie_str(movie_list[i], buffer + offset,
+                                    buffer_size - offset, genre);
+    if (l_write == -1) {
+      return 1;
+    }
+    offset += l_write;
+  }
+
+  return 0;
+}
+
 /* Private functions */
 
-int _get_pretty_movie_str(movie_struct movie, char *buffer, int buffer_size) {
+int _get_pretty_movie_str(movie_struct movie, char *buffer, int buffer_size,
+                          char *genre) {
+  /* genre = NULL : list all */
   char raw_movie_str[1000];
   int genre_buffer_size = MAX_GENRE_STRING_LENGTH * (MAX_GENRE_COUNT + 2) + 1;
   char genres_buffer[genre_buffer_size];
@@ -101,6 +119,21 @@ int _get_pretty_movie_str(movie_struct movie, char *buffer, int buffer_size) {
   if (read_status)
     return -1;
   deserialize_movie(raw_movie_str, &movie);
+
+  /* Filter genre if necessary */
+  if (genre != NULL) {
+    int has_genre = 0;
+    for (int genre_idx = 0; genre_idx < movie.genre_count; genre_idx++) {
+      if (strcasecmp(movie.genres[genre_idx], genre) == 0) {
+        has_genre = 1;
+        break;
+      }
+    }
+    if (!has_genre) {
+      strcpy(buffer, "");
+      return 0;
+    }
+  }
 
   int j = 0, length = 0, l_write;
   /* prepare genre line */

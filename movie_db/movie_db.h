@@ -34,10 +34,12 @@ int add_genre_to_movie(int id, char *genre);
 
 int get_all_movie_data(char *buffer, int buffer_size);
 
+int get_movie_per_genre(char *buffer, int buffer_size, char *genre);
+
 int rm_movie(int id);
 
 /* Private functions */
-int _get_pretty_movie_str(movie_struct movie, char *buffer, int buffer_size);
+int _get_pretty_movie_str(movie_struct movie, char *buffer, int buffer_size, char *genre);
 int _read_movie_str(movie_struct movie, char *buffer);
 int test();
 int _get_next_id();
