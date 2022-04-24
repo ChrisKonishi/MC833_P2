@@ -3,6 +3,8 @@
 
 #include "../shared_structs.h"
 
+/* Public functions */
+
 int intialize_movie_db() {
   if (mkdir(DB_FOLDER, 0777)) {
     if (errno == EEXIST)
@@ -39,14 +41,237 @@ int register_movie(char *name, int genre_count,
            movie.name);
 
   /* write to file */
-  FILE *file = fopen(filename, "w");
-  if (file == NULL) {
-    fprintf(stderr, "Couldn't create file %s\n", filename);
+  if (_write_str_to_file(filename, buffer)) return -1;
+  return movie.id;
+}
+
+int list_movies(char *buffer, int buffer_size) {
+  movie_struct movie_list[MAX_MOVIES];
+  int q = _list_id_name(movie_list);
+  int length = 0, l_write;
+
+  qsort(movie_list, q, sizeof(movie_struct), _cmp_movie_id);
+
+  l_write =
+      snprintf(buffer + length, buffer_size - length, "%s\n\n", "[ID]: [Name]");
+  if (l_write <= 0 || l_write >= buffer_size - length) return 1;
+  length += l_write;
+  for (int movie_idx = 0; movie_idx < q; movie_idx++) {
+    l_write = snprintf(buffer + length, buffer_size - length, "%d: %s\n",
+                       movie_list[movie_idx].id, movie_list[movie_idx].name);
+    if (l_write <= 0 || l_write >= buffer_size - length) return 1;
+    length += l_write;
+  }
+
+  return 0;
+}
+
+int get_all_movie_data(char *buffer, int buffer_size) {
+  movie_struct movie_list[MAX_MOVIES];
+  int q = _list_id_name(movie_list);
+  int l_write, offset = 0;
+
+  qsort(movie_list, q, sizeof(movie_struct), _cmp_movie_id);
+
+  for (int i = 0; i < q; i++) {
+    l_write = _get_pretty_movie_str(movie_list[i], buffer + offset,
+                                    buffer_size - offset, NULL);
+    if (l_write == -1) {
+      return 1;
+    }
+    offset += l_write;
+  }
+
+  return 0;
+}
+
+int get_movie_data(int id, char *buffer, int buffer_size) {
+  movie_struct movie_list[MAX_MOVIES];
+  int q = _list_id_name(movie_list), found = 0;
+  int movie_idx = 0;
+  for (movie_idx = 0; movie_idx < q; movie_idx++) {
+    if (movie_list[movie_idx].id == id) {
+      found = 1;
+      break;
+    }
+  }
+
+  if (!found) {
+    snprintf(buffer, buffer_size, "%s", "Movie not found\n");
+  }
+
+  movie_struct *movie = &movie_list[movie_idx];
+  if (_get_pretty_movie_str(*movie, buffer, buffer_size, NULL) == -1) {
+    return 1;
+  }
+  return 0;
+}
+
+int get_movie_per_genre(char *buffer, int buffer_size, char *genre) {
+  movie_struct movie_list[MAX_MOVIES];
+  int q = _list_id_name(movie_list);
+  int l_write, offset = 0;
+
+  qsort(movie_list, q, sizeof(movie_struct), _cmp_movie_id);
+
+  for (int i = 0; i < q; i++) {
+    l_write = _get_pretty_movie_str(movie_list[i], buffer + offset,
+                                    buffer_size - offset, genre);
+    if (l_write == -1) {
+      return 1;
+    }
+    offset += l_write;
+  }
+
+  return 0;
+}
+
+int rm_movie(int id) {
+  char filename[MAX_FILENAME_SIZE];
+  if (_get_movie_filename_from_id(id, filename)) {
     return -1;
   }
-  fprintf(file, "%s", buffer);
+  if (remove(filename) == 0)
+    return 0;
+  else
+    return 1;
+}
+
+int add_genre_to_movie(int id, char *genre) {
+  movie_struct movie_list[MAX_MOVIES];
+  int q = _list_id_name(movie_list);
+  int movie_idx = 0, found = 0;
+  movie_struct *movie;
+
+  for (movie_idx = 0; movie_idx < q; movie_idx++) {
+    if (movie_list[movie_idx].id == id) {
+      found = 1;
+      break;
+    }
+  }
+
+  if (!found) return -1;
+
+  movie = &movie_list[movie_idx];
+
+  char serialized[MAX_SERIALIZED_SIZE];
+  if (_read_movie_str(movie_list[movie_idx], serialized)) {
+    return 1;
+  }
+  if (deserialize_movie(serialized, movie)) return 1;
+
+  if (movie->genre_count >= MAX_GENRE_COUNT) {
+    fprintf(stderr, "Max genre count reached\n");
+    return 1;
+  }
+
+  strcpy(movie->genres[movie->genre_count], genre);
+  movie->genre_count++;
+
+  if (serialize_movie(*movie, serialized, MAX_SERIALIZED_SIZE)) {
+    fprintf(stderr, "Error serializing\n");
+    return 1;
+  }
+  char filename[MAX_FILENAME_SIZE];
+  snprintf(filename, MAX_FILENAME_SIZE, "%s/%d_%s", DB_FOLDER, movie->id,
+           movie->name);
+
+  if (_write_str_to_file(filename, serialized)) return 1;
+
+  return 0;
+}
+
+/* ######################################## */
+/* ######### Private functions ############ */
+
+int _get_movie_filename_from_id(int id, char *filename) {
+  movie_struct movie_list[MAX_MOVIES];
+  int q = _list_id_name(movie_list);
+  int movie_idx = 0, found = 0;
+
+  for (movie_idx = 0; movie_idx < q; movie_idx++) {
+    if (movie_list[movie_idx].id == id) {
+      found = 1;
+      break;
+    }
+  }
+  if (found) {
+    snprintf(filename, MAX_FILENAME_SIZE, "%s/%d_%s", DB_FOLDER,
+             movie_list[movie_idx].id, movie_list[movie_idx].name);
+    return 0;
+  }
+  return 1;
+}
+
+int _get_pretty_movie_str(movie_struct movie, char *buffer, int buffer_size,
+                          char *genre) {
+  /* genre = NULL : list all */
+  char raw_movie_str[1000];
+  int genre_buffer_size = MAX_GENRE_STRING_LENGTH * (MAX_GENRE_COUNT + 2) + 1;
+  char genres_buffer[genre_buffer_size];
+  int read_status = _read_movie_str(movie, raw_movie_str);
+  if (read_status) return -1;
+  deserialize_movie(raw_movie_str, &movie);
+
+  /* Filter genre if necessary */
+  if (genre != NULL) {
+    int has_genre = 0;
+    for (int genre_idx = 0; genre_idx < movie.genre_count; genre_idx++) {
+      if (strcasecmp(movie.genres[genre_idx], genre) == 0) {
+        has_genre = 1;
+        break;
+      }
+    }
+    if (!has_genre) {
+      strcpy(buffer, "");
+      return 0;
+    }
+  }
+
+  int j = 0, length = 0, l_write;
+  /* prepare genre line */
+  while (j < movie.genre_count) {
+    l_write = snprintf(genres_buffer + length, genre_buffer_size - length,
+                       "%s, ", movie.genres[j]);
+    if (l_write <= 0 || l_write >= genre_buffer_size - length) return -1;
+    length += l_write;
+    j++;
+  }
+  if (length >= 2) /* rm last comma */
+    genres_buffer[length - 2] = '\0';
+
+  l_write = snprintf(
+      buffer, buffer_size,
+      "ID: %d\nName: %s\nDirector: %s\nGenres: %s\nRelease year: %d\n\n",
+      movie.id, movie.name, movie.director, genres_buffer, movie.release_year);
+  if (l_write < 0 || l_write > buffer_size) return -1;
+  return l_write;
+}
+
+int _read_movie_str(movie_struct movie, char *buffer) {
+  char filename[MAX_FILENAME_SIZE];
+  int error = 0;
+  snprintf(filename, MAX_FILENAME_SIZE, "%s/%d_%s", DB_FOLDER, movie.id,
+           movie.name);
+  FILE *file = fopen(filename, "r");
+  if (file == NULL) {
+    fprintf(stderr, "Couldn't open file %s\n", filename);
+    return 1;
+  }
+
+  error = fseek(file, 0, SEEK_END); /* end of file */
+  long fsize = ftell(file);         /* size of file */
+  error = error || fsize == -1;
+  error = error || fseek(file, 0, SEEK_SET); /* rewind file */
+  error = error || fread(buffer, fsize, 1, file) != 1;
+
   fclose(file);
-  return movie.id;
+  if (error) {
+    fprintf(stderr, "Couldn't read file %s\n", filename);
+    return 1;
+  }
+  buffer[fsize] = '\0';
+  return 0;
 }
 
 int _get_next_id() { /* return an unused id */
@@ -84,6 +309,25 @@ int _list_id_name(movie_struct *id_name_list) {
   }
   closedir(dir);
   return i;
+}
+
+int _cmp_movie_id(const void *a, const void *b) {
+  movie_struct *ma = (movie_struct *)a;
+  movie_struct *mb = (movie_struct *)b;
+
+  return (ma->id - mb->id);
+}
+
+int _write_str_to_file(char *filename, char *buffer) {
+  FILE *file = fopen(filename, "w");
+  if (file == NULL) {
+    fprintf(stderr, "Couldn't create file %s\n", filename);
+    return 1;
+  }
+  fprintf(file, "%s", buffer);
+  fclose(file);
+
+  return 0;
 }
 
 int test() {
