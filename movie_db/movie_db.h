@@ -4,6 +4,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -25,8 +26,8 @@ int register_movie(char *name, int genre_count,
                    int release_year); /* add more stuff here */
 /* returns -1 on error, registered movie id otherwise */
 
-char ***list_movies();
-/* returns [[<id>, <name>], [<id>, <name>]] */
+int list_movies(char *buffer, int buffer_size);
+/* returns "id: title" */
 
 int get_movie_data(int id, char *buffer, int buffer_size);
 
@@ -44,6 +45,7 @@ int _read_movie_str(movie_struct movie, char *buffer);
 int test();
 int _get_next_id();
 int _list_id_name(movie_struct *id_name_list);
+int _cmp_movie_id(const void *a, const void *b);
 
 #include "movie_db.c"
 

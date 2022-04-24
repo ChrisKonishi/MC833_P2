@@ -51,10 +51,35 @@ int register_movie(char *name, int genre_count,
   return movie.id;
 }
 
+int list_movies(char *buffer, int buffer_size) {
+  movie_struct movie_list[MAX_MOVIES];
+  int q = _list_id_name(movie_list);
+  int length = 0, l_write;
+
+  qsort(movie_list, q, sizeof(movie_struct), _cmp_movie_id);
+
+  l_write =
+      snprintf(buffer + length, buffer_size - length, "%s\n\n", "[ID]: [Name]");
+  if (l_write <= 0 || l_write >= buffer_size - length)
+    return 1;
+  length += l_write;
+  for (int movie_idx = 0; movie_idx < q; movie_idx++) {
+    l_write = snprintf(buffer + length, buffer_size - length, "%d: %s\n",
+                       movie_list[movie_idx].id, movie_list[movie_idx].name);
+    if (l_write <= 0 || l_write >= buffer_size - length)
+      return 1;
+    length += l_write;
+  }
+
+  return 0;
+}
+
 int get_all_movie_data(char *buffer, int buffer_size) {
   movie_struct movie_list[MAX_MOVIES];
   int q = _list_id_name(movie_list);
   int l_write, offset = 0;
+
+  qsort(movie_list, q, sizeof(movie_struct), _cmp_movie_id);
 
   for (int i = 0; i < q; i++) {
     l_write = _get_pretty_movie_str(movie_list[i], buffer + offset,
@@ -94,6 +119,8 @@ int get_movie_per_genre(char *buffer, int buffer_size, char *genre) {
   movie_struct movie_list[MAX_MOVIES];
   int q = _list_id_name(movie_list);
   int l_write, offset = 0;
+
+  qsort(movie_list, q, sizeof(movie_struct), _cmp_movie_id);
 
   for (int i = 0; i < q; i++) {
     l_write = _get_pretty_movie_str(movie_list[i], buffer + offset,
@@ -218,6 +245,13 @@ int _list_id_name(movie_struct *id_name_list) {
   }
   closedir(dir);
   return i;
+}
+
+int _cmp_movie_id(const void *a, const void *b) {
+  movie_struct *ma = (movie_struct *)a;
+  movie_struct *mb = (movie_struct *)b;
+
+  return (ma->id - mb->id);
 }
 
 int test() {
