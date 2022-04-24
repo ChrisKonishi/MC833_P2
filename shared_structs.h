@@ -5,7 +5,7 @@
 #define MAXDATASIZE 100
 
 #define MAX_GENRE_STRING_LENGTH 20
-#define MAX_SERIALIZED_SIZE 10000
+#define MAX_SERIALIZED_SIZE 1000
 #define MAX_GENRE_COUNT 10
 
 typedef struct {
