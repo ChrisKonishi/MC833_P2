@@ -38,8 +38,10 @@ int get_all_movie_data(char *buffer, int buffer_size);
 int get_movie_per_genre(char *buffer, int buffer_size, char *genre);
 
 int rm_movie(int id);
+/* 1 on error, -1 if not found, 0 if everything goes right */
 
 /* Private functions */
+int _get_movie_filename_from_id(int id, char *filename);
 int _get_pretty_movie_str(movie_struct movie, char *buffer, int buffer_size, char *genre);
 int _read_movie_str(movie_struct movie, char *buffer);
 int test();
