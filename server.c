@@ -11,7 +11,7 @@
 
 void process_request();
 
-//void attach_header(char *msg, int size);
+void read_param(char* token, char param[][100], char delim[2]);
 
 int main(int argc, char **argv) {
 
@@ -54,7 +54,7 @@ int main(int argc, char **argv) {
             printf("Erro ao aceitar conexão\n");
             exit(1);
         }
-
+        printf("Conectado...\n");
         if ( (child_pid = fork()) == 0) { /* child process */
             close(socket_fd); /* close listening socket */
             process_request(new_fd); /* process the request */
@@ -68,18 +68,36 @@ int main(int argc, char **argv) {
 }
 
 void process_request(int socket_fd) {
-    int msg_size, operation;
-    char temp[2], buf[1000], *token;
+    int operation;
+    char buf[1000], *token;
     char delim[2] = ",";
 
     // Recebe a operação a ser realizada
-    recv_msg(socket_fd, buf, 1);
+    recv_msg(socket_fd, buf);
     token = strtok(buf, delim);
     operation = (int) strtol(token, NULL, 10);
+    
     // Lê os parâmetros
+    switch (operation)
+    {
+    case 1:
+        char param[2][100];
+        read_param(token, param, delim);
+        printf("%s, %s\n", param[0], param[1]);
+        break;
+    
+    default:
+        break;
+    }
+    
+}
+
+void read_param(char* token, char param[][100], char delim[2]) {
+    int i = -1;
     while( token != NULL ) {
-      printf( " %s\n", token );
-      token = strtok(NULL, s);
-   }
+        printf( " %s\n", token );
+        token = strtok(NULL, delim);
+        strcpy(param[i++], token);
+    }
 }
 

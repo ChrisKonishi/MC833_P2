@@ -13,7 +13,7 @@ void make_request(int socket_fd, int operation, char *param);
 int main(int argc, char **argv) {
 
     int status;
-    int socket_fd, numbytes;
+    int socket_fd;
     struct addrinfo hints, *res;
 
     memset(&hints, 0, sizeof(hints)); // make sure the struct isty
@@ -21,7 +21,7 @@ int main(int argc, char **argv) {
     hints.ai_socktype = SOCK_STREAM; //TCP stream sockets
 
     // OBS: o primeiro parâmetro é o endereço IP do servidor
-    if (( status = getaddrinfo("192.168.0.210", PORT_NUMBER, &hints, &res)) != 0) {
+    if (( status = getaddrinfo("192.168.1.120", PORT_NUMBER, &hints, &res)) != 0) {
         printf("getaddrinfo error: %s\n", gai_strerror(status));
         exit(1);
     }
@@ -36,7 +36,9 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    make_request(socket_fd, 15, "teste");
+    printf("Conectado\n");
+
+    make_request(socket_fd, 1, "teste,picanha");
 
     freeaddrinfo(res);
 
@@ -49,7 +51,7 @@ void make_request(int socket_fd, int operation, char *param) {
 
     // Adiciona o tamanho da mensagem e o número da operação no início, nessa ordem
     msg_size = strlen(param) + OPERATION_SIZE + MAX_MSG_SIZE_DIGITS;
-    snprintf(buf, 7, "%04d%d,", msg_size, operation);
+    snprintf(buf, 8, "%04d%02d,", msg_size, operation);
     strcat(buf, param);
 
     // Envia a operação requisitada

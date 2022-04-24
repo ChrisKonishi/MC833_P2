@@ -75,9 +75,10 @@ int send_msg(int socket_fd, char *msg, int msg_size) {
     total += bytes_sent;
     }
   } while (bytes_left > 0);
+  return 0;
 }
 
-int recv_msg(int socket_fd, char* buf, int is_operation) {
+int recv_msg(int socket_fd, char* buf) {
   int total, bytes_received, bytes_left, msg_size;
   char temp[MAX_MSG_SIZE_DIGITS];
 
@@ -87,7 +88,7 @@ int recv_msg(int socket_fd, char* buf, int is_operation) {
   do {
     if ( ( bytes_received = recv(socket_fd, &temp + total, bytes_left, 0) ) == -1) {
       printf("Erro ao enviar operação\n");
-      exit(1);
+      return -1;
     bytes_left -= bytes_received;
     total += bytes_received;
     }
@@ -101,9 +102,10 @@ int recv_msg(int socket_fd, char* buf, int is_operation) {
   do {
     if ( ( bytes_received = recv(socket_fd, &buf + total, bytes_left, 0) ) == -1) {
       printf("Erro ao enviar operação\n");
-      exit(1);
+      return -1;
     bytes_left -= bytes_received;
     total += bytes_received;
     }
   } while (bytes_left > 0);
+  return 0;
 }
