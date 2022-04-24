@@ -41,13 +41,7 @@ int register_movie(char *name, int genre_count,
            movie.name);
 
   /* write to file */
-  FILE *file = fopen(filename, "w");
-  if (file == NULL) {
-    fprintf(stderr, "Couldn't create file %s\n", filename);
-    return -1;
-  }
-  fprintf(file, "%s", buffer);
-  fclose(file);
+  if (_write_str_to_file(filename, buffer)) return -1;
   return movie.id;
 }
 
@@ -141,6 +135,50 @@ int rm_movie(int id) {
     return 0;
   else
     return 1;
+}
+
+int add_genre_to_movie(int id, char *genre) {
+  movie_struct movie_list[MAX_MOVIES];
+  int q = _list_id_name(movie_list);
+  int movie_idx = 0, found = 0;
+  movie_struct *movie;
+
+  for (movie_idx = 0; movie_idx < q; movie_idx++) {
+    if (movie_list[movie_idx].id == id) {
+      found = 1;
+      break;
+    }
+  }
+
+  if (!found) return -1;
+
+  movie = &movie_list[movie_idx];
+
+  char serialized[MAX_SERIALIZED_SIZE];
+  if (_read_movie_str(movie_list[movie_idx], serialized)) {
+    return 1;
+  }
+  if (deserialize_movie(serialized, movie)) return 1;
+
+  if (movie->genre_count >= MAX_GENRE_COUNT) {
+    fprintf(stderr, "Max genre count reached\n");
+    return 1;
+  }
+
+  strcpy(movie->genres[movie->genre_count], genre);
+  movie->genre_count++;
+
+  if (serialize_movie(*movie, serialized, MAX_SERIALIZED_SIZE)) {
+    fprintf(stderr, "Error serializing\n");
+    return 1;
+  }
+  char filename[MAX_FILENAME_SIZE];
+  snprintf(filename, MAX_FILENAME_SIZE, "%s/%d_%s", DB_FOLDER, movie->id,
+           movie->name);
+
+  if (_write_str_to_file(filename, serialized)) return 1;
+
+  return 0;
 }
 
 /* ######################################## */
@@ -278,6 +316,18 @@ int _cmp_movie_id(const void *a, const void *b) {
   movie_struct *mb = (movie_struct *)b;
 
   return (ma->id - mb->id);
+}
+
+int _write_str_to_file(char *filename, char *buffer) {
+  FILE *file = fopen(filename, "w");
+  if (file == NULL) {
+    fprintf(stderr, "Couldn't create file %s\n", filename);
+    return 1;
+  }
+  fprintf(file, "%s", buffer);
+  fclose(file);
+
+  return 0;
 }
 
 int test() {

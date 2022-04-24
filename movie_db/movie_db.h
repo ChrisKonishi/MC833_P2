@@ -40,6 +40,9 @@ int get_movie_per_genre(char *buffer, int buffer_size, char *genre);
 int rm_movie(int id);
 /* 1 on error, -1 if not found, 0 if everything goes right */
 
+int add_genre_to_movie(int id, char *genre);
+/* -1 if id not found, 1 on error, 0 on success */
+
 /* Private functions */
 int _get_movie_filename_from_id(int id, char *filename);
 int _get_pretty_movie_str(movie_struct movie, char *buffer, int buffer_size,
@@ -49,6 +52,7 @@ int test();
 int _get_next_id();
 int _list_id_name(movie_struct *id_name_list);
 int _cmp_movie_id(const void *a, const void *b);
+int _write_str_to_file(char *filename, char *buffer);
 
 #include "movie_db.c"
 
