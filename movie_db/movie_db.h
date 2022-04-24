@@ -42,7 +42,8 @@ int rm_movie(int id);
 
 /* Private functions */
 int _get_movie_filename_from_id(int id, char *filename);
-int _get_pretty_movie_str(movie_struct movie, char *buffer, int buffer_size, char *genre);
+int _get_pretty_movie_str(movie_struct movie, char *buffer, int buffer_size,
+                          char *genre);
 int _read_movie_str(movie_struct movie, char *buffer);
 int test();
 int _get_next_id();
