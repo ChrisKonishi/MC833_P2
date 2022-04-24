@@ -122,8 +122,8 @@ int _get_pretty_movie_str(movie_struct movie, char *buffer, int buffer_size) {
       "ID: %d\nName: %s\nDirector: %s\nGenres: %s\nRelease year: %d\n\n",
       movie.id, movie.name, movie.director, genres_buffer, movie.release_year);
   if (l_write < 0 || l_write > buffer_size)
-    return l_write;
-  return -1;
+    return -1;
+  return l_write;
 }
 
 int _read_movie_str(movie_struct movie, char *buffer) {
