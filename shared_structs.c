@@ -1,14 +1,11 @@
-#include "shared_structs.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <netdb.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 
 #include "shared_structs.h"
-
-#define OPERATION_SIZE 2;
-#define MAX_MSG_SIZE_DIGITS 4;
 
 typedef struct {
   int operation_id;
@@ -68,51 +65,46 @@ int deserialize_movie(char *movie_data, movie_struct *dst) {
 }
 
 int send_msg(int socket_fd, char *msg, int msg_size) {
-  int bytes_sent, bytes_left;
+  int total, bytes_sent, bytes_left;
+  total = 0;
   bytes_left = msg_size;
   do {
-    if ( ( bytes_sent = send(socket_fd, &msg, bytes_left, 0) ) == -1) {
+    if ( ( bytes_sent = send(socket_fd, &msg + total, bytes_left, 0) ) == -1) {
       return -1;
     bytes_left -= bytes_sent;
+    total += bytes_sent;
     }
   } while (bytes_left > 0);
   return 0;
 }
 
-int recv_msg(int socket_fd, char* buf, int is_operation) {
-  int bytes_received, bytes_left; /* , msg_size; */
-  char temp[4]; /* *ptr; */
+int recv_msg(int socket_fd, char* buf) {
+  int total, bytes_received, bytes_left, msg_size;
+  char temp[MAX_MSG_SIZE_DIGITS];
 
   // Read msg_size
   bytes_left = MAX_MSG_SIZE_DIGITS;
+  total = 0;
   do {
-    if ( ( bytes_received = recv(socket_fd, &temp, bytes_left, 0) ) == -1) {
+    if ( ( bytes_received = recv(socket_fd, &temp + total, bytes_left, 0) ) == -1) {
       printf("Erro ao enviar operação\n");
-      exit(1);
+      return -1;
     bytes_left -= bytes_received;
+    total += bytes_received;
     }
   } while (bytes_left > 0);
 
-  /* msg_size = (int) strtol(temp, &ptr, 10); */
-
-  // Se o header contém uma operação, leia
-  if (is_operation) {
-    bytes_left = OPERATION_SIZE;
-    do {
-      if ( ( bytes_received = recv(socket_fd, &temp, bytes_left, 0) ) == -1) {
-        printf("Erro ao enviar operação\n");
-        exit(1);
-      bytes_left -= bytes_received;
-      }
-    } while (bytes_left > 0);
-  }
+  msg_size = (int) strtol(temp, NULL, 10);
 
   // Read rest of the msg
+  bytes_left = msg_size - MAX_MSG_SIZE_DIGITS;
+  total = 0;
   do {
-    if ( ( bytes_received = recv(socket_fd, &buf, bytes_left, 0) ) == -1) {
+    if ( ( bytes_received = recv(socket_fd, &buf + total, bytes_left, 0) ) == -1) {
       printf("Erro ao enviar operação\n");
-      exit(1);
+      return -1;
     bytes_left -= bytes_received;
+    total += bytes_received;
     }
   } while (bytes_left > 0);
   return 0;

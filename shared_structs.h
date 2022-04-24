@@ -7,6 +7,8 @@
 #define MAX_GENRE_STRING_LENGTH 20
 #define MAX_SERIALIZED_SIZE 1000
 #define MAX_GENRE_COUNT 10
+#define OPERATION_SIZE 2
+#define MAX_MSG_SIZE_DIGITS 4
 
 typedef struct {
   int id;
