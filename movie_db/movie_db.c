@@ -85,11 +85,9 @@ int get_movie_data(int id, char *buffer, int buffer_size) {
   }
 
   movie_struct *movie = &movie_list[movie_idx];
-  if (_read_movie_str(*movie, buffer)) {
-    fprintf(stderr, "%s", "Couldn't read file\n");
+  if (_get_pretty_movie_str(*movie, buffer, buffer_size) == -1){
     return 1;
   }
-
   return 0;
 }
 
