@@ -76,14 +76,19 @@ void process_request(int socket_fd) {
     recv_msg(socket_fd, buf);
     token = strtok(buf, delim);
     operation = (int) strtol(token, NULL, 10);
+    printf("operation %d\n", operation);
     
     // Lê os parâmetros
     switch (operation)
     {
     case 1:
-        char param[2][100];
-        read_param(token, param, delim);
-        printf("%s, %s\n", param[0], param[1]);
+        // char param[2][100];
+        // read_param(token, param, delim);
+        // printf("%s, %s\n", param[0], param[1]);
+        while( token != NULL ) {
+            printf( "%s\n", token );
+            token = strtok(NULL, delim);
+        }
         break;
     
     default:

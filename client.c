@@ -21,7 +21,7 @@ int main(int argc, char **argv) {
     hints.ai_socktype = SOCK_STREAM; //TCP stream sockets
 
     // OBS: o primeiro parâmetro é o endereço IP do servidor
-    if (( status = getaddrinfo("192.168.1.120", PORT_NUMBER, &hints, &res)) != 0) {
+    if (( status = getaddrinfo("127.0.1.1", PORT_NUMBER, &hints, &res)) != 0) {
         printf("getaddrinfo error: %s\n", gai_strerror(status));
         exit(1);
     }
@@ -50,9 +50,10 @@ void make_request(int socket_fd, int operation, char *param) {
     int msg_size;
 
     // Adiciona o tamanho da mensagem e o número da operação no início, nessa ordem
-    msg_size = strlen(param) + OPERATION_SIZE + MAX_MSG_SIZE_DIGITS;
+    msg_size = strlen(param) + OPERATION_SIZE + MAX_MSG_SIZE_DIGITS + 1;
     snprintf(buf, 8, "%04d%02d,", msg_size, operation);
     strcat(buf, param);
+    printf("%s\n", buf);
 
     // Envia a operação requisitada
     send_msg(socket_fd, buf, msg_size);
