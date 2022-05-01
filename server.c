@@ -87,7 +87,6 @@ int process_request(int socket_fd) {
     recv_msg(socket_fd, buf);
     token = strtok(buf, delim);
     operation = (int) strtol(token, NULL, 10);
-    printf("operation %d\n", operation);
     
     char param[MAX_PARAM_COUNT][100];
     // Lê os parâmetros
@@ -120,17 +119,17 @@ int process_request(int socket_fd) {
     case ListInfoGenre:
         read_param(token, param, delim);
         get_movie_per_genre(answer, MAX_MSG_SIZE, param[0]);
-        return send_msg(socket_fd, answer, strlen(answer) + 1);
+        return send_msg(socket_fd, answer, strlen(answer));
 
     case ListAll:
         get_all_movie_data(answer, MAX_MSG_SIZE);  
-        return send_msg(socket_fd, answer, strlen(answer) + 1);
+        return send_msg(socket_fd, answer, strlen(answer));
 
     case ListFromID:
         read_param(token, param, delim);
         id = (int) strtol(param[0], NULL, 10);
         get_movie_data(id, answer, MAX_MSG_SIZE);
-        return send_msg(socket_fd, answer, strlen(answer) + 1);
+        return send_msg(socket_fd, answer, strlen(answer));
 
     case RmMovie:
         read_param(token, param, delim);

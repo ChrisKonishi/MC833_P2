@@ -66,15 +66,22 @@ int deserialize_movie(char *movie_data, movie_struct *dst) {
 
 int send_msg(int socket_fd, char *msg, int msg_size) {
   int total, bytes_sent, bytes_left;
+  char buf[MAX_MSG_SIZE] = {'\0'};
+
+  msg_size += 5;
+  snprintf(buf, 5, "%04d", msg_size);
+  strcat(buf, msg);
   total = 0;
   bytes_left = msg_size;
+
   do {
-    if ( ( bytes_sent = send(socket_fd, msg + total, bytes_left, 0) ) == -1) {
+    if ( ( bytes_sent = send(socket_fd, buf + total, bytes_left, 0) ) == -1) {
       return -1;
     }
     bytes_left -= bytes_sent;
     total += bytes_sent;
   } while (bytes_left > 0);
+
   return 0;
 }
 

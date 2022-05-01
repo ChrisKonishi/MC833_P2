@@ -12,6 +12,8 @@ void make_request(int socket_fd, int op, char *param);
 void print_operations();
 void terminal_interaction();
 void concat_param(char* buf, char* param);
+int expects_answer(int op);
+void run_test_op(int socket_fd);
 
 int connect_to_server() {
 
@@ -47,21 +49,28 @@ int connect_to_server() {
 }
 
 void make_request(int socket_fd, int op, char *param) {
-    char buf[1000] = {'\0'};
+    char buf[MAX_MSG_SIZE] = {'\0'};
+    char answer[MAX_MSG_SIZE];
     int msg_size;
 
     // Adiciona o tamanho da mensagem e o número da operação no início, nessa ordem
     // Somamos 2 no tamanho da mensagem para contar a vírgula adicionada e o \0
-    msg_size = strlen(param) + OPERATION_SIZE + MAX_MSG_SIZE_DIGITS + 2;
-    snprintf(buf, 8, "%04d%02d,", msg_size, op);
-    strcat(buf, param);
+    if (param) {
+        msg_size = strlen(param) + OPERATION_SIZE + 1;
+        snprintf(buf, 4, "%02d,", op);
+        strcat(buf, param);
+    }
+    else {
+        msg_size = OPERATION_SIZE + 1;
+        snprintf(buf, 4, "%02d,", op);
+    }
 
     // Envia a operação requisitada
     send_msg(socket_fd, buf, msg_size);
 
     if (expects_answer(op)) {
-        recv_msg(socket_fd, buf);
-        printf("%s", buf);
+        recv_msg(socket_fd, answer);
+        printf("%s\n", answer);
     }
 }
 
@@ -72,12 +81,15 @@ int expects_answer(int op) {
 }
 
 void terminal_interaction(int socket_fd) {
-    char buf[100];
+    char buf[MAX_MSG_SIZE];
     char param[100] = "";
+
     while (1) {
         print_operations();
+        memset(param, 0, 100);
         fgets(buf, 100, stdin);
         int op = (int) strtol(buf, NULL, 10);
+
         switch (op)
         {
         case 0:
@@ -97,10 +109,42 @@ void terminal_interaction(int socket_fd) {
             break;
 
         case AddGenreToMovie:
+            printf("Digite o ID do filme\n");
+            concat_param(buf, param);
+            printf("Digite o genero a ser adicionado\n");
+            concat_param(buf, param);
+            make_request(socket_fd, AddGenreToMovie, param);
+            break;
 
+        case ListMovies:
+            make_request(socket_fd, ListMovies, NULL);
+            break;
+
+        case ListInfoGenre:
+            printf("Digite o genero\n");
+            concat_param(buf, param);
+            make_request(socket_fd, ListInfoGenre, param);
+            break;
+
+        case ListAll:
+            make_request(socket_fd, ListAll, NULL);
+            break;
+
+        case ListFromID:
+            printf("Digite o ID\n");
+            concat_param(buf, param);
+            make_request(socket_fd, ListFromID, param);
+            break;
+            
+        case RmMovie:
+            printf("Digite o ID\n");
+            concat_param(buf, param);
+            make_request(socket_fd, RmMovie, param);
+            break;
 
         default:
             printf("Operação inválida\n");
+            break;
         }
     }
 }
@@ -114,6 +158,7 @@ void concat_param(char* buf, char* param) {
 
 void print_operations() {
     printf("\n");
+    printf("***************************\n");
     printf("Selecione uma operação:\n");
     printf("    %d: Register movie\n", RegisterMovie);
     printf("    %d: Add genre to movie\n", AddGenreToMovie);
@@ -125,25 +170,29 @@ void print_operations() {
     printf("    %d: Exit\n", 0);
 }
 
+void run_test_op(int socket_fd) {
+    make_request(socket_fd, RegisterMovie, "nome,dir,1993,3,acao,terror,sobrenatural");
+    make_request(socket_fd, RegisterMovie, "nome2,dir2,2011,2,acao,terror");
+    make_request(socket_fd, RegisterMovie, "nome3,dir3,2006,2,comedia,romance");
+    make_request(socket_fd, AddGenreToMovie, "1,old");
+    make_request(socket_fd, ListFromID, "2");
+    make_request(socket_fd, ListInfoGenre, "acao");
+    make_request(socket_fd, RmMovie, "2");
+    make_request(socket_fd, ListMovies, "");
+    make_request(socket_fd, RmMovie, "0");
+    make_request(socket_fd, RmMovie, "1");
+    make_request(socket_fd, Close, "");
+}
+
 int main() {
     int socket_fd = connect_to_server();
-    int interactive_mode = 0;
-    char buf[MAX_MSG_SIZE];
+    int interactive_mode = 1;
 
     if (interactive_mode)
         terminal_interaction(socket_fd);
     else {
-        make_request(socket_fd, RegisterMovie, "nomee,dirr,1993,3,acao,terror,sobrenatural");
-        // make_request(socket_fd, RegisterMovie, "nomee2,dirr2,2311,2,acao,terror");
-        // make_request(socket_fd, AddGenreToMovie, "0,old");
-        make_request(socket_fd, ListAll, "");
-        make_request(socket_fd, ListFromID, "1");
-        make_request(socket_fd, RmMovie, "3");
-        make_request(socket_fd, RmMovie, "4");
-        make_request(socket_fd, Close, "");
+        run_test_op(socket_fd);
     }
-
-    
 
     return 0;
 }
