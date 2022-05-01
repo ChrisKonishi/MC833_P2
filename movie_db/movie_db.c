@@ -329,10 +329,3 @@ int _write_str_to_file(char *filename, char *buffer) {
 
   return 0;
 }
-
-int test() {
-  movie_struct m;
-  m.id = 6;
-  printf("%d\n", m.id);
-  return 1;
-}

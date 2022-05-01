@@ -48,7 +48,6 @@ int _get_movie_filename_from_id(int id, char *filename);
 int _get_pretty_movie_str(movie_struct movie, char *buffer, int buffer_size,
                           char *genre);
 int _read_movie_str(movie_struct movie, char *buffer);
-int test();
 int _get_next_id();
 int _list_id_name(movie_struct *id_name_list);
 int _cmp_movie_id(const void *a, const void *b);
