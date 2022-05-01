@@ -2,6 +2,7 @@
 #define SHARED_STRUCTS_H_
 
 #define PORT_NUMBER "3490"
+#define IP_ADDRESS "127.0.1.1"
 #define MAXDATASIZE 100
 
 #define MAX_GENRE_STRING_LENGTH 20

@@ -11,7 +11,6 @@
 #define MAX_QUEUE 10
 
 int process_request();
-
 void read_param(char* token, char param[][100], char delim[2]);
 
 int main(int argc, char **argv) {
@@ -57,17 +56,17 @@ int main(int argc, char **argv) {
             printf("Erro ao aceitar conexão\n");
             exit(1);
         }
-        printf("Conectado...\n");
+        printf("Cliente conectado\n");
         if ( (child_pid = fork()) == 0) { /* child process */
             close(socket_fd); /* close listening socket */
             int open = 1;
+            // loop para processar multiplas requisicoes do cliente
+            // requisicao especifica para encerrar a conexao
             while (open) {
                 int a = process_request(new_fd);
-                if (a == -2)
+                if (a == Close)
                     open = 0;
             }
-            
-             /* process the request */
             exit(0);
         }
 
@@ -138,6 +137,7 @@ int process_request(int socket_fd) {
 
     case Close:
         return -2;
+
     default:
         return -1;
     }

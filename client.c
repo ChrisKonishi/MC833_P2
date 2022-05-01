@@ -26,7 +26,7 @@ int connect_to_server() {
     hints.ai_socktype = SOCK_STREAM; //TCP stream sockets
 
     // OBS: o primeiro parâmetro é o endereço IP do servidor
-    if (( status = getaddrinfo("127.0.1.1", PORT_NUMBER, &hints, &res)) != 0) {
+    if (( status = getaddrinfo(IP_ADDRESS, PORT_NUMBER, &hints, &res)) != 0) {
         printf("getaddrinfo error: %s\n", gai_strerror(status));
         exit(1);
     }
@@ -53,8 +53,8 @@ void make_request(int socket_fd, int op, char *param) {
     char answer[MAX_MSG_SIZE];
     int msg_size;
 
-    // Adiciona o tamanho da mensagem e o número da operação no início, nessa ordem
-    // Somamos 2 no tamanho da mensagem para contar a vírgula adicionada e o \0
+    // Adiciona o o número da operação aos parâmetros
+    // Somamos 1 no tamanho da mensagem para contar a vírgula adicionada
     if (param) {
         msg_size = strlen(param) + OPERATION_SIZE + 1;
         snprintf(buf, 4, "%02d,", op);
@@ -68,6 +68,7 @@ void make_request(int socket_fd, int op, char *param) {
     // Envia a operação requisitada
     send_msg(socket_fd, buf, msg_size);
 
+    // Algumas operacoes esperam uma resposta
     if (expects_answer(op)) {
         recv_msg(socket_fd, answer);
         printf("%s\n", answer);
@@ -148,7 +149,8 @@ void terminal_interaction(int socket_fd) {
         }
     }
 }
-//enum operations {RegisterMovie = 1, AddGenreToMovie, ListMovies, ListInfoGenre, ListAll, ListFromID, RmMovie, Close = -2};
+
+// Monta a string de parametros separados por virgula para enviar ao servidor 
 void concat_param(char* buf, char* param) {
     fgets(buf, 100, stdin);
     buf[strcspn(buf, "\n")] = 0;
@@ -158,16 +160,16 @@ void concat_param(char* buf, char* param) {
 
 void print_operations() {
     printf("\n");
-    printf("***************************\n");
+    printf("**************************************\n");
     printf("Selecione uma operação:\n");
-    printf("    %d: Register movie\n", RegisterMovie);
-    printf("    %d: Add genre to movie\n", AddGenreToMovie);
-    printf("    %d: List movie titles\n", ListMovies);
-    printf("    %d: List movies info from genre\n", ListInfoGenre);
-    printf("    %d: List all info\n", ListAll);
-    printf("    %d: Get movie info\n", ListFromID);
-    printf("    %d: Remove movie\n", RmMovie);
-    printf("    %d: Exit\n", 0);
+    printf("    %d: Registrar filme\n", RegisterMovie);
+    printf("    %d: Adicionar um gênero ao filme\n", AddGenreToMovie);
+    printf("    %d: Listar títulos e seus identificadores\n", ListMovies);
+    printf("    %d: Listar filmes de um gênero\n", ListInfoGenre);
+    printf("    %d: Listar todos os filmes\n", ListAll);
+    printf("    %d: Listar informações de um filme\n", ListFromID);
+    printf("    %d: Remover filme\n", RmMovie);
+    printf("    %d: Sair\n", 0);
 }
 
 void run_test_op(int socket_fd) {
@@ -178,17 +180,24 @@ void run_test_op(int socket_fd) {
     make_request(socket_fd, ListFromID, "2");
     make_request(socket_fd, ListInfoGenre, "acao");
     make_request(socket_fd, RmMovie, "2");
-    make_request(socket_fd, ListMovies, "");
+    make_request(socket_fd, ListMovies, NULL);
     make_request(socket_fd, RmMovie, "0");
     make_request(socket_fd, RmMovie, "1");
-    make_request(socket_fd, Close, "");
+    make_request(socket_fd, Close, NULL);
 }
 
 int main() {
+    char buf[10];
     int socket_fd = connect_to_server();
-    int interactive_mode = 1;
 
-    if (interactive_mode)
+    printf("Selecione o modo de operação:\n");
+    printf("1: Modo interativo\n");
+    printf("2: Rodar teste\n");
+
+    fgets(buf, 10, stdin);
+    int op = (int) strtol(buf, NULL, 10);
+
+    if (op == 1)
         terminal_interaction(socket_fd);
     else {
         run_test_op(socket_fd);
