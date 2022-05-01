@@ -70,7 +70,7 @@ int send_msg(int socket_fd, char *msg, int msg_size) {
   bytes_left = msg_size;
   do {
     if ( ( bytes_sent = send(socket_fd, msg + total, bytes_left, 0) ) == -1) {
-      exit(1);
+      return -1;
     }
     bytes_left -= bytes_sent;
     total += bytes_sent;
@@ -80,14 +80,13 @@ int send_msg(int socket_fd, char *msg, int msg_size) {
 
 int recv_msg(int socket_fd, char* buf) {
   int total, bytes_received, bytes_left, msg_size;
-  char temp[30] = {'\0'};;
+  char temp[30] = {'\0'};
 
   // Read msg_size
   bytes_left = MAX_MSG_SIZE_DIGITS;
   total = 0;
   do {
     if ( ( bytes_received = recv(socket_fd, temp + total, bytes_left, 0) ) == -1) {
-      printf("Erro ao receber mensagem1\n");
       return -1;
     }
     bytes_left -= bytes_received;
@@ -95,20 +94,17 @@ int recv_msg(int socket_fd, char* buf) {
   } while (bytes_left > 0);
 
   msg_size = (int) strtol(temp, NULL, 10);
-  msg_size = 20;
-  printf("temp %s\n", temp);
 
   // Read rest of the msg
   bytes_left = msg_size - MAX_MSG_SIZE_DIGITS;
   total = 0;
   do {
     if ( ( bytes_received = recv(socket_fd, buf + total, bytes_left, 0) ) == -1) {
-      printf("Erro ao receber mensagem2\n");
       return -1;
     }
     bytes_left -= bytes_received;
     total += bytes_received;
   } while (bytes_left > 0);
-  printf("%s\n", buf);
+
   return 0;
 }

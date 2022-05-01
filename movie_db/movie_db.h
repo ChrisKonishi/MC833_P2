@@ -21,9 +21,9 @@
 int intialize_movie_db();
 /* Call it before using other db functions, returns 0 if nothing goes wrong */
 
-int register_movie(char *name, int genre_count,
-                   char genres[][MAX_GENRE_STRING_LENGTH], char *director,
-                   int release_year); /* add more stuff here */
+int register_movie(char *name, char *director, int release_year,
+                   int genre_count, char genres[][MAX_GENRE_STRING_LENGTH]
+                   ); /* add more stuff here */
 /* returns -1 on error, registered movie id otherwise */
 
 int list_movies(char *buffer, int buffer_size);

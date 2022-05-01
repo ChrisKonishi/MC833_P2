@@ -6,10 +6,11 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include "shared_structs.h"
+#include "movie_db/movie_db.h"
 
 #define MAX_QUEUE 10
 
-void process_request();
+int process_request();
 
 void read_param(char* token, char param[][100], char delim[2]);
 
@@ -46,6 +47,8 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
+    intialize_movie_db();
+
     printf("Aguardando conexões...\n");
 
     for ( ; ; ) {
@@ -57,7 +60,14 @@ int main(int argc, char **argv) {
         printf("Conectado...\n");
         if ( (child_pid = fork()) == 0) { /* child process */
             close(socket_fd); /* close listening socket */
-            process_request(new_fd); /* process the request */
+            int open = 1;
+            while (open) {
+                int a = process_request(new_fd);
+                if (a == -2)
+                    open = 0;
+            }
+            
+             /* process the request */
             exit(0);
         }
 
@@ -67,9 +77,10 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-void process_request(int socket_fd) {
-    int operation;
-    char buf[1000], *token;
+int process_request(int socket_fd) {
+    int operation, id;
+    char buf[MAX_MSG_SIZE], *token;
+    char answer[MAX_MSG_SIZE];
     char delim[2] = ",";
 
     // Recebe a operação a ser realizada
@@ -78,31 +89,70 @@ void process_request(int socket_fd) {
     operation = (int) strtol(token, NULL, 10);
     printf("operation %d\n", operation);
     
+    char param[MAX_PARAM_COUNT][100];
     // Lê os parâmetros
     switch (operation)
     {
-    case 1:
-        // char param[2][100];
-        // read_param(token, param, delim);
-        // printf("%s, %s\n", param[0], param[1]);
-        while( token != NULL ) {
-            printf( "%s\n", token );
-            token = strtok(NULL, delim);
+    case RegisterMovie:
+        read_param(token, param, delim);
+
+        // converts values to int
+        int release_year = (int) strtol(param[2], NULL, 10);
+        int genre_count = (int) strtol(param[3], NULL, 10);
+
+        // fills array with genres names
+        char genres[MAX_GENRE_COUNT][MAX_GENRE_STRING_LENGTH];
+        for (int i = 0; i < genre_count; i++) {
+            strcpy(genres[i], param[i + 4]);
         }
-        break;
+
+        return register_movie(param[0], param[1], release_year, genre_count, genres);
+
+    case AddGenreToMovie:
+        read_param(token, param, delim);
+        int movie_id = (int) strtol(param[0], NULL, 10);
+        return add_genre_to_movie(movie_id, param[1]);
     
+    case ListMovies:
+        list_movies(answer, MAX_MSG_SIZE);
+        return send_msg(socket_fd, answer, strlen(answer) + 1);
+
+    case ListInfoGenre:
+        read_param(token, param, delim);
+        get_movie_per_genre(answer, MAX_MSG_SIZE, param[0]);
+        return send_msg(socket_fd, answer, strlen(answer) + 1);
+
+    case ListAll:
+        get_all_movie_data(answer, MAX_MSG_SIZE);  
+        return send_msg(socket_fd, answer, strlen(answer) + 1);
+
+    case ListFromID:
+        read_param(token, param, delim);
+        id = (int) strtol(param[0], NULL, 10);
+        get_movie_data(id, answer, MAX_MSG_SIZE);
+        return send_msg(socket_fd, answer, strlen(answer) + 1);
+
+    case RmMovie:
+        read_param(token, param, delim);
+        id = (int) strtol(param[0], NULL, 10);
+        return rm_movie(id);
+
+    case Close:
+        return -2;
     default:
-        break;
+        return -1;
     }
-    
+    //RegisterMovie = 1, AddGenreToMovie, ListMovies, ListInfoGenre, ListAll, ListID, RmMovie
 }
 
 void read_param(char* token, char param[][100], char delim[2]) {
-    int i = -1;
+    int i = 0;
     while( token != NULL ) {
-        printf( " %s\n", token );
         token = strtok(NULL, delim);
-        strcpy(param[i++], token);
+        if (token) {
+            strcpy(param[i++], token);
+        }
+            
     }
 }
 

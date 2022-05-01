@@ -16,9 +16,8 @@ int intialize_movie_db() {
   return 0;
 }
 
-int register_movie(char *name, int genre_count,
-                   char genres[][MAX_GENRE_STRING_LENGTH], char *director,
-                   int release_year) {
+int register_movie(char *name, char *director, int release_year,
+                   int genre_count, char genres[][MAX_GENRE_STRING_LENGTH]) {
   movie_struct movie; /* temp struct to serialize */
   strcpy(movie.name, name);
   strcpy(movie.director, director);
