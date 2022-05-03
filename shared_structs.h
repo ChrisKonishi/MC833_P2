@@ -31,6 +31,8 @@ int serialize_movie(movie_struct movie, char *dst, int len);
 
 int deserialize_movie(char *movie_data, movie_struct *dst);
 
+float time_diff(struct timeval *start, struct timeval *end);
+
 #include "shared_structs.c"
 
 #endif

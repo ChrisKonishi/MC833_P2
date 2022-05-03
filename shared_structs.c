@@ -4,6 +4,8 @@
 #include <netdb.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/time.h>
+#include <time.h>
 
 #include "shared_structs.h"
 
@@ -114,4 +116,8 @@ int recv_msg(int socket_fd, char* buf) {
   } while (bytes_left > 0);
 
   return 0;
+}
+
+float time_diff(struct timeval *start, struct timeval *end) {
+    return (end->tv_sec - start->tv_sec) + 1e-6*(end->tv_usec - start->tv_usec);
 }

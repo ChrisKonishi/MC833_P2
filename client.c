@@ -15,6 +15,7 @@ void concat_param(char* buf, char* param);
 int expects_answer(int op);
 void run_test_op(int socket_fd);
 
+
 int connect_to_server() {
 
     int status;
@@ -173,16 +174,61 @@ void print_operations() {
 }
 
 void run_test_op(int socket_fd) {
-    make_request(socket_fd, RegisterMovie, "nome,dir,1993,3,acao,terror,sobrenatural");
-    make_request(socket_fd, RegisterMovie, "nome2,dir2,2011,2,acao,terror");
-    make_request(socket_fd, RegisterMovie, "nome3,dir3,2006,2,comedia,romance");
-    make_request(socket_fd, AddGenreToMovie, "1,old");
+    struct timeval start, end;
+    
+    make_request(socket_fd, RegisterMovie, "Avengers: Endgame,Anthony Russo,2019,4,Fantasy, Adventure,Sci-Fi,Action");
+    make_request(socket_fd, RegisterMovie, "The Irishman,Martin Scorsese,2019,2,Drama,Crime");
+    make_request(socket_fd, RegisterMovie, "Inside Out,Pete Docter,2015,3,Comedy,Fantasy,Animation");
+    make_request(socket_fd, RegisterMovie, "Gravity,Alfonso Cuarón, 2013,3,Drama,Mystery & Thriller,Sci-Fi");
+    make_request(socket_fd, RegisterMovie, "1917,Sam Mendes,2020,3,Drama,War,History");
+    make_request(socket_fd, AddGenreToMovie, "0,Superheroes");
+
+    printf("*********************************\n");
+    printf("Informações de todos os filmes:\n\n");
+    gettimeofday(&start, NULL);
+    make_request(socket_fd, ListAll, NULL);
+    gettimeofday(&end, NULL);
+    printf("Tempo de resposta: %f\n", time_diff(&start, &end));
+
+    printf("*********************************\n");
+    printf("Informações do filme de ID 2:\n\n");
+    gettimeofday(&start, NULL);
     make_request(socket_fd, ListFromID, "2");
-    make_request(socket_fd, ListInfoGenre, "acao");
-    make_request(socket_fd, RmMovie, "2");
+    gettimeofday(&end, NULL);
+    printf("Tempo de resposta: %f\n", time_diff(&start, &end));
+
+    printf("*********************************\n");
+    printf("Informações dos filmes do gênero sci-fi:\n\n");
+    gettimeofday(&start, NULL);
+    make_request(socket_fd, ListInfoGenre, "Sci-Fi");
+    gettimeofday(&end, NULL);
+    printf("Tempo de resposta: %f\n", time_diff(&start, &end));
+
+    make_request(socket_fd, RmMovie, "3");
+    printf("*********************************\n");
+    printf("Listagem dos filmes após a remoção do filme de ID 3:\n\n");
+    gettimeofday(&start, NULL);
     make_request(socket_fd, ListMovies, NULL);
+    gettimeofday(&end, NULL);
+    printf("Tempo de resposta: %f\n", time_diff(&start, &end));
+
     make_request(socket_fd, RmMovie, "0");
     make_request(socket_fd, RmMovie, "1");
+    make_request(socket_fd, RegisterMovie, "Alien,Ridley Scott,1979,2,Sci-Fi,Horror");
+    printf("*********************************\n");
+    printf("Listagem dos filmes após a remoção dos IDs 0 e 1 e adição do Alien:\n\n");
+    gettimeofday(&start, NULL);
+    make_request(socket_fd, ListMovies, NULL);
+    gettimeofday(&end, NULL);
+    printf("Tempo de resposta: %f\n", time_diff(&start, &end));
+
+    // cleans database
+    make_request(socket_fd, RmMovie, "2");
+    make_request(socket_fd, RmMovie, "3");
+    make_request(socket_fd, RmMovie, "4");
+    make_request(socket_fd, RmMovie, "5");
+
+    // closes connection
     make_request(socket_fd, Close, NULL);
 }
 
