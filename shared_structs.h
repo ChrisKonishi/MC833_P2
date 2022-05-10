@@ -2,6 +2,7 @@
 #define SHARED_STRUCTS_H_
 
 #define PORT_NUMBER "3490"
+// Por padrão usa o endereço da própria máquina
 #define IP_ADDRESS "127.0.1.1"
 #define MAXDATASIZE 100
 
