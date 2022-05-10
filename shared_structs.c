@@ -70,8 +70,8 @@ int send_msg(int socket_fd, char *msg, int msg_size) {
   int total, bytes_sent, bytes_left;
   char buf[MAX_MSG_SIZE] = {'\0'};
 
-  msg_size += 5;
-  snprintf(buf, 5, "%04d", msg_size);
+  msg_size += 7;
+  snprintf(buf, 7, "%06d", (short) msg_size);
   strcat(buf, msg);
   total = 0;
   bytes_left = msg_size;

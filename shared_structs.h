@@ -10,7 +10,7 @@
 #define MAX_GENRE_COUNT 10
 #define OPERATION_SIZE 2
 #define MAX_MSG_SIZE 1500
-#define MAX_MSG_SIZE_DIGITS 4
+#define MAX_MSG_SIZE_DIGITS 6
 #define MAX_PARAM_COUNT MAX_GENRE_STRING_LENGTH + 4
 
 typedef struct {
