@@ -10,7 +10,7 @@
 
 #define MAX_QUEUE 10
 
-int process_request();
+int process_request(int socket_fd);
 void read_param(char* token, char param[][100], char delim[2]);
 
 int main(int argc, char **argv) {
