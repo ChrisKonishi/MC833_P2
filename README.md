@@ -1,4 +1,4 @@
-# Projeto 1 MC833 - TCP
+# Projeto 2 MC833 - UDP
 
 ## Compilando
 
