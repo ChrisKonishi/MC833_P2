@@ -10,20 +10,19 @@
 
 #define MAX_QUEUE 10
 
-int process_request(int socket_fd);
+int process_request(int socket_f);
 void read_param(char* token, char param[][100], char delim[2]);
 
 int main(int argc, char **argv) {
 
     int status, child_pid;
     int socket_fd, new_fd;
-    struct addrinfo hints, *res;
-    struct sockaddr_storage client_addr;
+    struct addrinfo hints, *res, *p;
     socklen_t addr_size;
 
     memset(&hints, 0, sizeof(hints)); // make sure the struct is empty
     hints.ai_family = AF_UNSPEC; //don't care IPv4 or IPv6
-    hints.ai_socktype = SOCK_STREAM; //TCP stream sockets
+    hints.ai_socktype = SOCK_DGRAM; //UDP datagram sockets
     hints.ai_flags = AI_PASSIVE; // fill in my IP for me
 
     if (( status = getaddrinfo(NULL, PORT_NUMBER, &hints, &res)) != 0) {
@@ -31,48 +30,33 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    if ( (socket_fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol) ) < 0) {
-        printf("Erro ao criar o socket\n");
-        exit(1);
+    for(p = res; p != NULL; p = p->ai_next) {
+        if ((socket_fd = socket(p->ai_family, p->ai_socktype,
+                p->ai_protocol)) == -1) {
+            continue;
+        }
+
+        if (bind(socket_fd, p->ai_addr, p->ai_addrlen) == -1) {
+            close(socket_fd);
+            continue;
+        }
+        break;
     }
 
-    if ( bind(socket_fd, res->ai_addr, res->ai_addrlen) < 0) {
-        printf("Erro ao dar bind\n");
-        exit(1);
+    if (p == NULL) {
+        fprintf(stderr, "listener: failed to bind socket\n");
+        return 1;
     }
-
-    if ( listen(socket_fd, MAX_QUEUE) < 0) {
-        printf("Erro ao escutar\n");
-        exit(1);
-    }
+    freeaddrinfo(res);
 
     intialize_movie_db();
 
-    printf("Aguardando conexões...\n");
+    printf("Aguardando mensagens...\n");
 
     for ( ; ; ) {
-        addr_size = sizeof client_addr;
-        if ( (new_fd = accept(socket_fd, (struct sockaddr *)&client_addr, &addr_size)) < 0) {
-            printf("Erro ao aceitar conexão\n");
-            exit(1);
-        }
-        printf("Cliente conectado\n");
-        if ( (child_pid = fork()) == 0) { /* child process */
-            close(socket_fd); /* close listening socket */
-            int open = 1;
-            // loop para processar multiplas requisicoes do cliente
-            // requisicao especifica para encerrar a conexao
-            while (open) {
-                int a = process_request(new_fd);
-                if (a == Close)
-                    open = 0;
-            }
-            exit(0);
-        }
-
-        close(new_fd);
+        int a = process_request(socket_fd);
     }
-
+    close(socket_fd);
     return 0;
 }
 
@@ -82,9 +66,10 @@ int process_request(int socket_fd) {
     char answer[MAX_MSG_SIZE];
     char delim[2] = ",";
     struct timeval start, end;
+    struct sockaddr_storage client_addr;
 
     // Recebe a operação a ser realizada
-    recv_msg(socket_fd, buf);
+    recv_msg(socket_fd, buf, &client_addr);
 
     gettimeofday(&start, NULL);
     
@@ -119,20 +104,20 @@ int process_request(int socket_fd) {
         list_movies(answer, MAX_MSG_SIZE);
         gettimeofday(&end, NULL);
         printf("Tempo de processamento: %f\n", time_diff(&start, &end));
-        return send_msg(socket_fd, answer, strlen(answer) + 1);
+        return send_msg(socket_fd, (struct addrinfo *) &client_addr, answer, strlen(answer) + 1);
 
     case ListInfoGenre:
         read_param(token, param, delim);
         get_movie_per_genre(answer, MAX_MSG_SIZE, param[0]);
         gettimeofday(&end, NULL);
         printf("Tempo de processamento: %f\n", time_diff(&start, &end));
-        return send_msg(socket_fd, answer, strlen(answer));
+        return send_msg(socket_fd, (struct addrinfo *) &client_addr, answer, strlen(answer));
 
     case ListAll:
         get_all_movie_data(answer, MAX_MSG_SIZE);
         gettimeofday(&end, NULL);
         printf("Tempo de processamento: %f\n", time_diff(&start, &end));
-        return send_msg(socket_fd, answer, strlen(answer));
+        return send_msg(socket_fd, (struct addrinfo *) &client_addr, answer, strlen(answer));
 
     case ListFromID:
         read_param(token, param, delim);
@@ -140,7 +125,7 @@ int process_request(int socket_fd) {
         get_movie_data(id, answer, MAX_MSG_SIZE);
         gettimeofday(&end, NULL);
         printf("Tempo de processamento: %f\n", time_diff(&start, &end));
-        return send_msg(socket_fd, answer, strlen(answer));
+        return send_msg(socket_fd, (struct addrinfo *) &client_addr, answer, strlen(answer));
 
     case RmMovie:
         read_param(token, param, delim);

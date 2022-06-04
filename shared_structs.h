@@ -13,6 +13,7 @@
 #define MAX_MSG_SIZE 1500
 #define MAX_MSG_SIZE_DIGITS 6
 #define MAX_PARAM_COUNT MAX_GENRE_STRING_LENGTH + 4
+#define TIMEOUT 2500
 
 typedef struct {
   int id;

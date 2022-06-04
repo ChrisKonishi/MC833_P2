@@ -1,14 +1,14 @@
+#include "shared_structs.h"
+
+#include <netdb.h>
+#include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <netdb.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+#include <sys/types.h>
 #include <time.h>
-#include <poll.h>
-
-#include "shared_structs.h"
 
 typedef struct {
   int operation_id;
@@ -68,54 +68,42 @@ int deserialize_movie(char *movie_data, movie_struct *dst) {
 }
 
 int send_msg(int socket_fd, struct addrinfo *p, char *msg, int msg_size) {
-  int total, bytes_sent, bytes_left;
-  bytes_left = msg_size;
-
-  do {
-    if ( ( bytes_sent = sendto(socket_fd, msg + total, bytes_left, 0, p->ai_addr, p->ai_addrlen) ) == -1) {
-      return -1;
-    }
-    bytes_left -= bytes_sent;
-    total += bytes_sent;
-  } while (bytes_left > 0);
-
+  if ((sendto(socket_fd, msg, msg_size, 0, p->ai_addr, p->ai_addrlen)) == -1)
+    return -1;
   return 0;
 }
 
-int recv_msg(int socket_fd, char* buf) {
-  int total, bytes_received, bytes_left, msg_size;
-  char temp[30] = {'\0'};
+int recv_msg(int socket_fd, char *buf, struct sockaddr_storage *client_addr) {
+  int addr_len = sizeof(*client_addr);
 
-  // Read msg_size
-  bytes_left = MAX_MSG_SIZE_DIGITS;
-  total = 0;
-  do {
-    if ( ( bytes_received = recv(socket_fd, temp + total, bytes_left, 0) ) == -1) {
-      return -1;
-    }
-    bytes_left -= bytes_received;
-    total += bytes_received;
-  } while (bytes_left > 0);
-
-  msg_size = (int) strtol(temp, NULL, 10);
-
-  // Read rest of the msg
-  bytes_left = msg_size - MAX_MSG_SIZE_DIGITS;
-  total = 0;
-  do {
-    if ( ( bytes_received = recv(socket_fd, buf + total, bytes_left, 0) ) == -1) {
-      return -1;
-    }
-    bytes_left -= bytes_received;
-    total += bytes_received;
-  } while (bytes_left > 0);
-
+  if (recvfrom(socket_fd, buf, MAX_MSG_SIZE_DIGITS - 1, 0,
+               (struct sockaddr *)client_addr, &addr_len) == -1) {
+    fprintf(stderr, "Error receivinf message\n");
+    return -1;
+  }
   return 0;
 }
 
-int recv_msg_non_blocking(int socket_fd, char* buf) {
+int recv_msg_non_blocking(int socket_fd, char *buf, struct sockaddr_storage *client_addr) {
+  struct pollfd pfds[1];
+
+  pfds[0].fd = socket_fd;
+  pfds[0].events = POLLIN;
+
+  int num_events = poll(pfds, 1, TIMEOUT);
+
+  if (num_events == 0) {
+    printf("Timeout\n");
+    return 1;
+  } else {
+    if (pfds[0].revents & POLLIN) {
+      recv_msg(socket_fd, buf, client_addr);
+    } else {
+      fprintf(stderr, "Unexpected event occurred: %d\n", pfds[0].revents);
+    }
+  }
 }
 
 float time_diff(struct timeval *start, struct timeval *end) {
-    return (end->tv_sec - start->tv_sec) + 1e-6*(end->tv_usec - start->tv_usec);
+  return (end->tv_sec - start->tv_sec) + 1e-6 * (end->tv_usec - start->tv_usec);
 }
