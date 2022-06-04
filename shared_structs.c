@@ -68,23 +68,24 @@ int deserialize_movie(char *movie_data, movie_struct *dst) {
 }
 
 int send_msg(int socket_fd, struct addrinfo *p, char *msg, int msg_size) {
-  if ((sendto(socket_fd, msg, msg_size, 0, p->ai_addr, p->ai_addrlen)) == -1)
-    return -1;
+  int sent = sendto(socket_fd, msg, msg_size, 0, p->ai_addr, p->ai_addrlen);
+  if (sent == -1) return -1;
   return 0;
 }
 
 int recv_msg(int socket_fd, char *buf, struct sockaddr_storage *client_addr) {
   int addr_len = sizeof(*client_addr);
-
-  if (recvfrom(socket_fd, buf, MAX_MSG_SIZE_DIGITS - 1, 0,
-               (struct sockaddr *)client_addr, &addr_len) == -1) {
+  int received = recvfrom(socket_fd, buf, MAX_MSG_SIZE, 0,
+                      (struct sockaddr *)client_addr, &addr_len);
+  if (received == -1) {
     fprintf(stderr, "Error receivinf message\n");
     return -1;
   }
   return 0;
 }
 
-int recv_msg_non_blocking(int socket_fd, char *buf, struct sockaddr_storage *client_addr) {
+int recv_msg_non_blocking(int socket_fd, char *buf,
+                          struct sockaddr_storage *client_addr) {
   struct pollfd pfds[1];
 
   pfds[0].fd = socket_fd;

@@ -16,43 +16,6 @@ int expects_answer(int op);
 void run_test_op(int socket_fd, struct addrinfo *p);
 
 
-int connect_to_server(char *ip_address, struct addrinfo **res, struct addrinfo **p) {
-
-    int status;
-    int socket_fd;
-    struct addrinfo hints;
-
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_UNSPEC; //don't care IPv4 or IPv6
-    hints.ai_socktype = SOCK_DGRAM; //TCP stream sockets
-
-    // OBS: o primeiro parâmetro é o endereço IP do servidor
-    if (( status = getaddrinfo(ip_address, PORT_NUMBER, &hints, &(*res))) != 0) {
-        printf("getaddrinfo error: %s\n", gai_strerror(status));
-        exit(1);
-    }
-
-    for(p = res; p != NULL; p = (*p)->ai_next) {
-        if ((socket_fd = socket((*p)->ai_family, (*p)->ai_socktype,
-                (*p)->ai_protocol)) == -1) {
-            continue;
-        }
-        break;
-    }
-    if (*p == NULL) {
-        fprintf(stderr, "Não foi possível criar um socket\n");
-        exit(1);
-    }
-
-    if (connect(socket_fd, (*res)->ai_addr, (*res)->ai_addrlen) < 0) {
-        printf("Não foi possível conectar ao servidor\n");
-        exit(1);
-    }
-
-    printf("Socket criado\n");
-
-    return socket_fd;
-}
 
 void make_request(int socket_fd, struct addrinfo *p, int op, char *param) {
     char buf[MAX_MSG_SIZE] = {'\0'};
@@ -73,7 +36,7 @@ void make_request(int socket_fd, struct addrinfo *p, int op, char *param) {
     }
 
     // Envia a operação requisitada
-    send_msg(socket_fd, p, buf, msg_size);
+    int status = send_msg(socket_fd, p, buf, msg_size);
 
     // Algumas operacoes esperam uma resposta
     if (expects_answer(op)) {
@@ -241,7 +204,8 @@ void run_test_op(int socket_fd, struct addrinfo *p) {
 int main(int argc, char **argv) {
     char *ip_address;
     char buf[10];
-    struct addrinfo *res, *p;
+    int socket_fd, status;
+    struct addrinfo hints, *res, *p;
 
     if (argc == 1){
         printf("Endereço de IP não informado (./<programa> <endereço de IP>), utilizando %s\n", IP_ADDRESS);
@@ -255,7 +219,34 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    int socket_fd = connect_to_server(ip_address, &res, &p);
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC; //don't care IPv4 or IPv6
+    hints.ai_socktype = SOCK_DGRAM; //TCP stream sockets
+
+    // OBS: o primeiro parâmetro é o endereço IP do servidor
+    if (( status = getaddrinfo(ip_address, PORT_NUMBER, &hints, &res)) != 0) {
+        printf("getaddrinfo error: %s\n", gai_strerror(status));
+        exit(1);
+    }
+
+    for(p = res; p != NULL; p = p->ai_next) {
+        if ((socket_fd = socket(p->ai_family, p->ai_socktype,
+                p->ai_protocol)) == -1) {
+            continue;
+        }
+        break;
+    }
+    if (p == NULL) {
+        fprintf(stderr, "Não foi possível criar um socket\n");
+        exit(1);
+    }
+
+    if (connect(socket_fd, res->ai_addr, res->ai_addrlen) < 0) {
+        printf("Não foi possível conectar ao servidor\n");
+        exit(1);
+    }
+
+    printf("Socket criado\n");
 
     printf("Selecione o modo de operação:\n");
     printf("1: Modo interativo\n");
