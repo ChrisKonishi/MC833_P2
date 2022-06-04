@@ -8,48 +8,53 @@
 
 #include "shared_structs.h"
 
-void make_request(int socket_fd, int op, char *param);
+void make_request(int socket_fd, struct addrinfo *p, int op, char *param);
 void print_operations();
-void terminal_interaction();
+void terminal_interaction(int socket_fd, struct addrinfo *p);
 void concat_param(char* buf, char* param);
 int expects_answer(int op);
 void run_test_op(int socket_fd);
 
 
-int connect_to_server(char *ip_address) {
+int connect_to_server(char *ip_address, struct addrinfo **res, struct addrinfo **p) {
 
     int status;
     int socket_fd;
-    struct addrinfo hints, *res;
+    struct addrinfo hints;
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC; //don't care IPv4 or IPv6
-    hints.ai_socktype = SOCK_STREAM; //TCP stream sockets
+    hints.ai_socktype = SOCK_DGRAM; //TCP stream sockets
 
     // OBS: o primeiro parâmetro é o endereço IP do servidor
-    if (( status = getaddrinfo(ip_address, PORT_NUMBER, &hints, &res)) != 0) {
+    if (( status = getaddrinfo(ip_address, PORT_NUMBER, &hints, &(*res))) != 0) {
         printf("getaddrinfo error: %s\n", gai_strerror(status));
         exit(1);
     }
 
-    if ( (socket_fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol) ) < 0) {
-        printf("Erro ao criar o socket\n");
+    for(p = res; p != NULL; p = (*p)->ai_next) {
+        if ((socket_fd = socket((*p)->ai_family, (*p)->ai_socktype,
+                (*p)->ai_protocol)) == -1) {
+            continue;
+        }
+        break;
+    }
+    if (*p == NULL) {
+        fprintf(stderr, "Não foi possível criar um socket\n");
         exit(1);
     }
 
-    if (connect(socket_fd, res->ai_addr, res->ai_addrlen) < 0) {
+    if (connect(socket_fd, (*res)->ai_addr, (*res)->ai_addrlen) < 0) {
         printf("Não foi possível conectar ao servidor\n");
         exit(1);
     }
 
-    printf("Conectado\n");
-
-    freeaddrinfo(res);
+    printf("Socket criado\n");
 
     return socket_fd;
 }
 
-void make_request(int socket_fd, int op, char *param) {
+void make_request(int socket_fd, struct addrinfo *p, int op, char *param) {
     char buf[MAX_MSG_SIZE] = {'\0'};
     char answer[MAX_MSG_SIZE];
     int msg_size;
@@ -67,7 +72,7 @@ void make_request(int socket_fd, int op, char *param) {
     }
 
     // Envia a operação requisitada
-    send_msg(socket_fd, buf, msg_size);
+    send_msg(socket_fd, p, buf, msg_size);
 
     // Algumas operacoes esperam uma resposta
     if (expects_answer(op)) {
@@ -82,7 +87,7 @@ int expects_answer(int op) {
     return 0;
 }
 
-void terminal_interaction(int socket_fd) {
+void terminal_interaction(int socket_fd, struct addrinfo *p) {
     char buf[MAX_MSG_SIZE];
     char param[100] = "";
 
@@ -107,7 +112,7 @@ void terminal_interaction(int socket_fd) {
             concat_param(buf, param);
             printf("Digite os generos\n");
             concat_param(buf, param);
-            make_request(socket_fd, RegisterMovie, param);
+            make_request(socket_fd, p, RegisterMovie, param);
             break;
 
         case AddGenreToMovie:
@@ -115,33 +120,33 @@ void terminal_interaction(int socket_fd) {
             concat_param(buf, param);
             printf("Digite o genero a ser adicionado\n");
             concat_param(buf, param);
-            make_request(socket_fd, AddGenreToMovie, param);
+            make_request(socket_fd, p, AddGenreToMovie, param);
             break;
 
         case ListMovies:
-            make_request(socket_fd, ListMovies, NULL);
+            make_request(socket_fd, p, ListMovies, NULL);
             break;
 
         case ListInfoGenre:
             printf("Digite o genero\n");
             concat_param(buf, param);
-            make_request(socket_fd, ListInfoGenre, param);
+            make_request(socket_fd, p, ListInfoGenre, param);
             break;
 
         case ListAll:
-            make_request(socket_fd, ListAll, NULL);
+            make_request(socket_fd, p, ListAll, NULL);
             break;
 
         case ListFromID:
             printf("Digite o ID\n");
             concat_param(buf, param);
-            make_request(socket_fd, ListFromID, param);
+            make_request(socket_fd, p, ListFromID, param);
             break;
             
         case RmMovie:
             printf("Digite o ID\n");
             concat_param(buf, param);
-            make_request(socket_fd, RmMovie, param);
+            make_request(socket_fd, p, RmMovie, param);
             break;
 
         default:
@@ -235,6 +240,7 @@ void run_test_op(int socket_fd) {
 int main(int argc, char **argv) {
     char *ip_address;
     char buf[10];
+    struct addrinfo *res, *p;
 
     if (argc == 1){
         printf("Endereço de IP não informado (./<programa> <endereço de IP>), utilizando %s\n", IP_ADDRESS);
@@ -248,7 +254,7 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    int socket_fd = connect_to_server(ip_address);
+    int socket_fd = connect_to_server(ip_address, &res, &p);
 
     printf("Selecione o modo de operação:\n");
     printf("1: Modo interativo\n");
@@ -258,10 +264,12 @@ int main(int argc, char **argv) {
     int op = (int) strtol(buf, NULL, 10);
 
     if (op == 1)
-        terminal_interaction(socket_fd);
+        terminal_interaction(socket_fd, p);
     else {
         run_test_op(socket_fd);
     }
+
+    freeaddrinfo(res);
 
     return 0;
 }

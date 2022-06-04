@@ -6,6 +6,7 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <time.h>
+#include <poll.h>
 
 #include "shared_structs.h"
 
@@ -66,18 +67,12 @@ int deserialize_movie(char *movie_data, movie_struct *dst) {
   return 0;
 }
 
-int send_msg(int socket_fd, char *msg, int msg_size) {
+int send_msg(int socket_fd, struct addrinfo *p, char *msg, int msg_size) {
   int total, bytes_sent, bytes_left;
-  char buf[MAX_MSG_SIZE] = {'\0'};
-
-  msg_size += 7;
-  snprintf(buf, 7, "%06d", (short) msg_size);
-  strcat(buf, msg);
-  total = 0;
   bytes_left = msg_size;
 
   do {
-    if ( ( bytes_sent = send(socket_fd, buf + total, bytes_left, 0) ) == -1) {
+    if ( ( bytes_sent = sendto(socket_fd, msg + total, bytes_left, 0, p->ai_addr, p->ai_addrlen) ) == -1) {
       return -1;
     }
     bytes_left -= bytes_sent;
@@ -116,6 +111,9 @@ int recv_msg(int socket_fd, char* buf) {
   } while (bytes_left > 0);
 
   return 0;
+}
+
+int recv_msg_non_blocking(int socket_fd, char* buf) {
 }
 
 float time_diff(struct timeval *start, struct timeval *end) {
