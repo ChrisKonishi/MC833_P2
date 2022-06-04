@@ -27,8 +27,6 @@ typedef struct {
 enum operations {RegisterMovie = 1, AddGenreToMovie, ListMovies, ListInfoGenre, ListAll, ListFromID, RmMovie, Close = -2};
 
 int serialize_movie(movie_struct movie, char *dst, int len);
-/* serializes a movie struct to a JSON string (dst), returns 0 on success, 1
-   on error, such as insufficient string size */
 
 int deserialize_movie(char *movie_data, movie_struct *dst);
 

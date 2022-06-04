@@ -16,7 +16,7 @@ int expects_answer(int op);
 void run_test_op(int socket_fd);
 
 
-int connect_to_server() {
+int connect_to_server(char *ip_address) {
 
     int status;
     int socket_fd;
@@ -27,7 +27,7 @@ int connect_to_server() {
     hints.ai_socktype = SOCK_STREAM; //TCP stream sockets
 
     // OBS: o primeiro parâmetro é o endereço IP do servidor
-    if (( status = getaddrinfo(IP_ADDRESS, PORT_NUMBER, &hints, &res)) != 0) {
+    if (( status = getaddrinfo(ip_address, PORT_NUMBER, &hints, &res)) != 0) {
         printf("getaddrinfo error: %s\n", gai_strerror(status));
         exit(1);
     }
@@ -232,9 +232,23 @@ void run_test_op(int socket_fd) {
     make_request(socket_fd, Close, NULL);
 }
 
-int main() {
+int main(int argc, char **argv) {
+    char *ip_address;
     char buf[10];
-    int socket_fd = connect_to_server();
+
+    if (argc == 1){
+        printf("Endereço de IP não informado (./<programa> <endereço de IP>), utilizando %s\n", IP_ADDRESS);
+        ip_address = IP_ADDRESS;
+    }
+    else if (argc == 2){
+        ip_address = argv[1];
+    }
+    else{
+        printf("Uso: ./<programa> <endereço de IP (opcional)>\nSe o endereço for omitido, utiliza-se %s\n", IP_ADDRESS);
+        exit(1);
+    }
+
+    int socket_fd = connect_to_server(ip_address);
 
     printf("Selecione o modo de operação:\n");
     printf("1: Modo interativo\n");
