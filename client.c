@@ -37,6 +37,9 @@ void make_request(int socket_fd, struct addrinfo *p, int op, char *param) {
 
     // Envia a operação requisitada
     int status = send_msg(socket_fd, p, buf, msg_size);
+    if (status == -1) {
+        fprintf(stderr, "Error sending message\n");
+    }
 
     // Algumas operacoes esperam uma resposta
     if (expects_answer(op)) {

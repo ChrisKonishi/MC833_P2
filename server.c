@@ -15,10 +15,9 @@ void read_param(char* token, char param[][100], char delim[2]);
 
 int main(int argc, char **argv) {
 
-    int status, child_pid;
-    int socket_fd, new_fd;
+    int status;
+    int socket_fd;
     struct addrinfo hints, *res, *p;
-    socklen_t addr_size;
 
     memset(&hints, 0, sizeof(hints)); // make sure the struct is empty
     hints.ai_family = AF_UNSPEC; //don't care IPv4 or IPv6

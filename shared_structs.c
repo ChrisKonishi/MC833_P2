@@ -84,7 +84,7 @@ int recv_msg(int socket_fd, char *buf, struct sockaddr_storage *client_addr) {
   int received = recvfrom(socket_fd, buf, MAX_MSG_SIZE, 0,
                       (struct sockaddr *)client_addr, &addr_len);
   if (received == -1) {
-    fprintf(stderr, "Error receivinf message\n");
+    fprintf(stderr, "Error receiving message\n");
     return -1;
   }
   return 0;
@@ -104,9 +104,10 @@ int recv_msg_non_blocking(int socket_fd, char *buf,
     return 1;
   } else {
     if (pfds[0].revents & POLLIN) {
-      recv_msg(socket_fd, buf, client_addr);
+      return recv_msg(socket_fd, buf, client_addr);
     } else {
       fprintf(stderr, "Unexpected event occurred: %d\n", pfds[0].revents);
+      return 1;
     }
   }
 }
