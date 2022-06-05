@@ -67,9 +67,11 @@ int process_request(int socket_fd) {
     char delim[2] = ",";
     struct timeval start, end;
     struct sockaddr_storage client_addr;
+    struct sockaddr_in *addr_sender;
 
     // Recebe a operação a ser realizada
     recv_msg(socket_fd, buf, &client_addr);
+    addr_sender = (struct sockaddr_in *) &client_addr;
 
     gettimeofday(&start, NULL);
     
@@ -104,20 +106,20 @@ int process_request(int socket_fd) {
         list_movies(answer, MAX_MSG_SIZE);
         gettimeofday(&end, NULL);
         printf("Tempo de processamento: %f\n", time_diff(&start, &end));
-        return send_msg(socket_fd, (struct addrinfo *) &client_addr, answer, strlen(answer) + 1);
+        return send_msg_response(socket_fd, addr_sender, answer, strlen(answer) + 1);
 
     case ListInfoGenre:
         read_param(token, param, delim);
         get_movie_per_genre(answer, MAX_MSG_SIZE, param[0]);
         gettimeofday(&end, NULL);
         printf("Tempo de processamento: %f\n", time_diff(&start, &end));
-        return send_msg(socket_fd, (struct addrinfo *) &client_addr, answer, strlen(answer));
+        return send_msg_response(socket_fd, addr_sender, answer, strlen(answer));
 
     case ListAll:
         get_all_movie_data(answer, MAX_MSG_SIZE);
         gettimeofday(&end, NULL);
         printf("Tempo de processamento: %f\n", time_diff(&start, &end));
-        return send_msg(socket_fd, (struct addrinfo *) &client_addr, answer, strlen(answer));
+        return send_msg_response(socket_fd, addr_sender, answer, strlen(answer));
 
     case ListFromID:
         read_param(token, param, delim);
@@ -125,7 +127,7 @@ int process_request(int socket_fd) {
         get_movie_data(id, answer, MAX_MSG_SIZE);
         gettimeofday(&end, NULL);
         printf("Tempo de processamento: %f\n", time_diff(&start, &end));
-        return send_msg(socket_fd, (struct addrinfo *) &client_addr, answer, strlen(answer));
+        return send_msg_response(socket_fd, addr_sender, answer, strlen(answer));
 
     case RmMovie:
         read_param(token, param, delim);

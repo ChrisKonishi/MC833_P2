@@ -73,6 +73,12 @@ int send_msg(int socket_fd, struct addrinfo *p, char *msg, int msg_size) {
   return 0;
 }
 
+int send_msg_response(int socket_fd, struct sockaddr_in *p, char *msg, int msg_size) {
+  int sent = sendto(socket_fd, msg, msg_size, 0, (struct sockaddr *) p, sizeof(*p));
+  if (sent == -1) return -1;
+  return 0;
+}
+
 int recv_msg(int socket_fd, char *buf, struct sockaddr_storage *client_addr) {
   int addr_len = sizeof(*client_addr);
   int received = recvfrom(socket_fd, buf, MAX_MSG_SIZE, 0,

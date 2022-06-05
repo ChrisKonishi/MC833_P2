@@ -241,11 +241,6 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    if (connect(socket_fd, res->ai_addr, res->ai_addrlen) < 0) {
-        printf("Não foi possível conectar ao servidor\n");
-        exit(1);
-    }
-
     printf("Socket criado\n");
 
     printf("Selecione o modo de operação:\n");
