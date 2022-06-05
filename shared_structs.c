@@ -80,7 +80,7 @@ int send_msg_response(int socket_fd, struct sockaddr_in *p, char *msg, int msg_s
 }
 
 int recv_msg(int socket_fd, char *buf, struct sockaddr_storage *client_addr) {
-  int addr_len = sizeof(*client_addr);
+  socklen_t addr_len = sizeof(*client_addr);
   int received = recvfrom(socket_fd, buf, MAX_MSG_SIZE, 0,
                       (struct sockaddr *)client_addr, &addr_len);
   if (received == -1) {
