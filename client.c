@@ -26,12 +26,12 @@ void make_request(int socket_fd, struct addrinfo *p, int op, char *param) {
     // Adiciona o o número da operação aos parâmetros
     // Somamos 1 no tamanho da mensagem para contar a vírgula adicionada
     if (param) {
-        msg_size = strlen(param) + OPERATION_SIZE + 1;
+        msg_size = strlen(param) + OPERATION_SIZE + 2; /* comma + \0 */
         snprintf(buf, 4, "%02d,", op);
         strcat(buf, param);
     }
     else {
-        msg_size = OPERATION_SIZE + 1;
+        msg_size = OPERATION_SIZE + 2; /* comma + \0 */
         snprintf(buf, 4, "%02d,", op);
     }
 
